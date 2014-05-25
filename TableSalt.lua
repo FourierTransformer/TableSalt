@@ -153,7 +153,8 @@ function TableSalt.allDiff(section, board)
     return newDomains
 end
 
-function TableSalt:solveConstraints(addAnyVarOnChange)
+function TableSalt:solveConstraints(addVarsAfterAnyChange)
+    local addVarsAfterAnyChange = addVarsAfterAnyChange or false
     local frontier = heap:new()
     for i, v in ipairs(self.constraints) do
         frontier:push(v, v.numCells)
@@ -193,7 +194,7 @@ function TableSalt:solveConstraints(addAnyVarOnChange)
                 end
 
                 -- -- add any constraints associated with a changed domain
-                if addAnyVarOnChange and oldSize ~= #v then
+                if addVarsAfterAnyChange and oldSize ~= #v then
                     for i, v in ipairs(currentConstraint.section) do
                         local cellIndex = currentConstraint.section[i]
                         for q, r in ipairs(self.cells[cellIndex].constraints) do
@@ -217,9 +218,8 @@ function TableSalt:solveConstraints(addAnyVarOnChange)
     return passed
 end
 
-function TableSalt:solveBackTrack()
-    -- now that domain reduction is done, DFS can be applied.
-    -- aka HAX
+function TableSalt:solveBackTrack(addVarsAfterAnyChange)
+    local addVarsAfterAnyChange = addVarsAfterAnyChange or true
     local smallestDomainSize = math.huge
     local cellIndex = nil
     for i = 1, self.size do
@@ -241,7 +241,7 @@ function TableSalt:solveBackTrack()
             self:addConstraintByIDs({cellIndex}, TableSalt.setVal, v)
 
             -- run it and handle the cases correctly
-            local didItPass = self:solveConstraints(false)
+            local didItPass = self:solveConstraints(addVarsAfterAnyChange)
             
             if didItPass then
                 return true
@@ -257,6 +257,15 @@ function TableSalt:solveBackTrack()
         end
     end
     return false
+end
+
+function TableSalt:solve(addVarsAfterAnyChange)
+    local addVarsAfterAnyChange = addVarsAfterAnyChange or true
+    local passed = self:solveConstraints(addVarsAfterAnyChange)
+    if not passed then
+        passed = self:solveBackTrack(addVarsAfterAnyChange)
+    end
+    return passed
 end
 
 function TableSalt:printTable()
