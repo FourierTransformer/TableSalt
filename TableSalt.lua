@@ -238,13 +238,13 @@ function TableSalt:solveConstraints(addAnyVarOnChange)
     return passed
 end
 
-function TableSalt.solveDFS(board)
+function TableSalt:solveBackTrack()
     -- now that domain reduction is done, DFS can be applied.
     -- aka HAX
     local smallestDomainSize = math.huge
     local cellIndex = nil
-    for i = 1, board.size do
-        local currentDomainSize = #board.cells[i].domain
+    for i = 1, self.size do
+        local currentDomainSize = #self.cells[i].domain
         if currentDomainSize > 1 and currentDomainSize < smallestDomainSize then
             smallestDomainSize = currentDomainSize
             cellIndex = i
@@ -252,32 +252,32 @@ function TableSalt.solveDFS(board)
     end
     if cellIndex ~= nil then
         -- make a copy of the old cells
-        for w, x in ipairs(board.constraints) do
+        for w, x in ipairs(self.constraints) do
             x.passed = false
         end
-        local oldboard = deepcopy(board)
+        local oldboard = deepcopy(self)
 
-        for q, v in ipairs(board.cells[cellIndex].domain) do
+        for q, v in ipairs(self.cells[cellIndex].domain) do
             -- clear old constraints and add one of the values to the constraints            
-            board:addConstraintIDs({cellIndex}, TableSalt.setVal, v)
+            self:addConstraintIDs({cellIndex}, TableSalt.setVal, v)
 
             -- run it and handle the cases correctly
-            local didItPass = board:solveConstraints(false)
+            local didItPass = self:solveConstraints(false)
             
             if didItPass then
-                return board, true
+                return true
             elseif didItPass == false then
                 -- Maybe we just need to iterate deeper?
-                local board, herp = TableSalt.solveDFS(board)
+                local herp = self:solveBackTrack()
                 if herp == true then
-                    return board, herp
+                    return herp
                 end
             end
             -- remove the constraint that was just added and try again
-            board = oldboard
+            self = oldboard
         end
     end
-    return board, false
+    return false
 end
 
 local function solveSudoku(puzzle)
@@ -318,7 +318,7 @@ local function solveSudoku(puzzle)
     local start_time = os.clock()
     passed = test:solveConstraints(false)
     if passed == false then
-        test, passed = TableSalt.solveDFS(test)
+        passed = test:solveBackTrack()
     end
     local duration = (os.clock() - start_time) * 1000
     print(duration .. "ms to solve this puzzle")
