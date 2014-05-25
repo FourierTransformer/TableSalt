@@ -1,0 +1,3 @@
+[submodule "util/Peaque"]
+	path = util/Peaque
+	url = git://github.com/FourierTransformer/Peaque.git

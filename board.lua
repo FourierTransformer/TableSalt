@@ -2,9 +2,7 @@
 
 -- imports
 local class = require ('class')
-local peaque = require ('peaque')
-local heap = peaque.Heap
-require 'deepcopy'
+local heap = require ('util/Peaque/Peaque')
 
 -- gotta deepcopy the table at times...
 local function ldeepcopy(orig)
