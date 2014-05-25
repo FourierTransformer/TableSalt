@@ -25,10 +25,10 @@ function constraint:initialize(section, checkFunction, ...)
     self.check = function(board) return checkFunction(self.section, board, self.args) end
 end
 
--- board class
--- creates an nxn board of "cells"
-local board = class()
-function board:initialize(sizeX, sizeY, domain)
+-- TableSalt class
+-- creates an nxm board of "cells"
+local TableSalt = class()
+function TableSalt:initialize(sizeX, sizeY, domain)
     self.sizeX = sizeX
     self.sizeY = sizeY
     self.size = sizeX*sizeY
@@ -36,27 +36,26 @@ function board:initialize(sizeX, sizeY, domain)
     for i = 1, self.size^2 do
         self.cells[i] = cell:new(i, deepcopy(domain))
     end
-    self.sections = {}
     self.constraints = {}
 end
 
-function board:getCellID(x, y)
+function TableSalt:getCellID(x, y)
     return (y-1)*self.sizeY+x
 end
 
-function board:getCellValueByPair(x, y)
+function TableSalt:getCellValueByPair(x, y)
     return self.cells[self:getCellID(x, y)].value
 end
 
-function board:getCellValueByID(i)
+function TableSalt:getCellValueByID(i)
     return self.cells[i].value
 end
 
-function board:getCellByPair(x, y)
+function TableSalt:getCellByPair(x, y)
     return self.cells[self:getCellID(x, y)]
 end
 
-function board:getCellByID(i)
+function TableSalt:getCellByID(i)
     return self.cells[i]
 end
 
@@ -64,7 +63,7 @@ end
 
 -- add a constraint to the board via IDs
 -- section is a list of ids. Ex: {1, 3, 5}
-function board:addConstraintIDs(section, checkFunction, ...)
+function TableSalt:addConstraintIDs(section, checkFunction, ...)
     local constraintNum = #self.constraints+1
     self.constraints[ constraintNum ] = constraint:new(section, checkFunction, ...)
     for i,v in ipairs(section) do
@@ -74,7 +73,7 @@ end
 
 -- add a constraint to the board via x,y position
 -- section is a list of x,y pairs. Ex: { {1,2}, {4,6}, {7,8} }
-function board:addConstraintPairs(section, checkFunction, ...)
+function TableSalt:addConstraintPairs(section, checkFunction, ...)
     local newSectionList = {}
     for i, v in ipairs(section) do
         newSectionList[i] = self:getCellID(v[1], v[2])
@@ -82,7 +81,7 @@ function board:addConstraintPairs(section, checkFunction, ...)
     self:addConstraintIDs(newSectionList, checkFunction, ...)
 end
 
-function board:addConstraintForEachRow(checkFunction, ...)
+function TableSalt:addConstraintForEachRow(checkFunction, ...)
     for i = 1, self.sizeY do
         local row = {}
         for j = 1, self.sizeX do
@@ -92,7 +91,7 @@ function board:addConstraintForEachRow(checkFunction, ...)
     end
 end
 
-function board:addConstraintForEachColumn(checkFunction, ...)
+function TableSalt:addConstraintForEachColumn(checkFunction, ...)
     for i = 1, self.sizeY do
         local col = {}
         for j = 1, self.sizeX do
@@ -102,7 +101,7 @@ function board:addConstraintForEachColumn(checkFunction, ...)
     end
 end
 
-function board:addConstraintForEntireTable(checkFunction, ...)
+function TableSalt:addConstraintForEntireTable(checkFunction, ...)
     local fullSection = {}
     for i = 1, self.size^2 do
         fullSection[ #fullSection+1 ] = i
@@ -111,12 +110,12 @@ function board:addConstraintForEntireTable(checkFunction, ...)
 end
 
 -- sets the value of the cell to the actual value
-function board.setVal(section, board, val)
+function TableSalt.setVal(section, board, val)
     return {{val}}
 end
 
 -- ensures all numbers in a section are of a different value
-function board.allDiff(section, board)
+function TableSalt.allDiff(section, board)
     local valuesToRemove = {}
     local newDomains = {}
 
@@ -154,7 +153,7 @@ function board.allDiff(section, board)
     return newDomains
 end
 
-function board:printTable()
+function TableSalt:printTable()
     for j = 1, 9 do
         local row = ""
         for i = 1, 9 do
@@ -175,7 +174,7 @@ function board:printTable()
     end
 end
 
-function board:SolveConstraints(addAnyVarOnChange)
+function TableSalt:solveConstraints(addAnyVarOnChange)
     local frontier = heap:new()
     for i, v in ipairs(self.constraints) do
         frontier:push(v, v.numCells)
@@ -239,13 +238,13 @@ function board:SolveConstraints(addAnyVarOnChange)
     return passed
 end
 
-function board.solveDFS(boardly)
+function TableSalt.solveDFS(board)
     -- now that domain reduction is done, DFS can be applied.
     -- aka HAX
     local smallestDomainSize = math.huge
     local cellIndex = nil
-    for i = 1, boardly.size do
-        local currentDomainSize = #boardly.cells[i].domain
+    for i = 1, board.size do
+        local currentDomainSize = #board.cells[i].domain
         if currentDomainSize > 1 and currentDomainSize < smallestDomainSize then
             smallestDomainSize = currentDomainSize
             cellIndex = i
@@ -253,44 +252,44 @@ function board.solveDFS(boardly)
     end
     if cellIndex ~= nil then
         -- make a copy of the old cells
-        for w, x in ipairs(boardly.constraints) do
+        for w, x in ipairs(board.constraints) do
             x.passed = false
         end
-        local oldboard = deepcopy(boardly)
+        local oldboard = deepcopy(board)
 
-        for q, v in ipairs(boardly.cells[cellIndex].domain) do
+        for q, v in ipairs(board.cells[cellIndex].domain) do
             -- clear old constraints and add one of the values to the constraints            
-            boardly:addConstraintIDs({cellIndex}, board.setVal, v)
+            board:addConstraintIDs({cellIndex}, TableSalt.setVal, v)
 
             -- run it and handle the cases correctly
-            local didItPass = boardly:SolveConstraints(false)
+            local didItPass = board:solveConstraints(false)
             
             if didItPass then
-                return boardly, true
+                return board, true
             elseif didItPass == false then
                 -- Maybe we just need to iterate deeper?
-                local boardly, herp = board.solveDFS(boardly)
+                local board, herp = TableSalt.solveDFS(board)
                 if herp == true then
-                    return boardly, herp
+                    return board, herp
                 end
             end
             -- remove the constraint that was just added and try again
-            boardly = oldboard
+            board = oldboard
         end
     end
-    return boardly, false
+    return board, false
 end
 
 local function solveSudoku(puzzle)
     -- setup the board
-    local test = board:new(9, 9, {1,2,3,4,5,6,7,8,9})
+    local test = TableSalt:new(9, 9, {1,2,3,4,5,6,7,8,9})
 
     -- import the puzzle to csp style
     local start_time = os.clock()
     local index = 1
     for c in puzzle:gmatch"." do
         if c ~= "0" then
-            test:addConstraintIDs({index}, board.setVal, tonumber(c))
+            test:addConstraintIDs({index}, TableSalt.setVal, tonumber(c))
         end
         index = index + 1
     end
@@ -306,20 +305,20 @@ local function solveSudoku(puzzle)
                     giantList[ #giantList+1 ] = {i+k*3, j+n*3}
                 end
             end
-            test:addConstraintPairs(giantList, board.allDiff)
+            test:addConstraintPairs(giantList, TableSalt.allDiff)
         end
     end
 
     -- SWEET LATIN SQUARES
-    test:addConstraintForEachColumn(board.allDiff)
-    test:addConstraintForEachRow(board.allDiff)
+    test:addConstraintForEachColumn(TableSalt.allDiff)
+    test:addConstraintForEachRow(TableSalt.allDiff)
 
     -- solve the puzzle
     local passed = nil
     local start_time = os.clock()
-    passed = test:SolveConstraints(false)
+    passed = test:solveConstraints(false)
     if passed == false then
-        test, passed = board.solveDFS(test)
+        test, passed = TableSalt.solveDFS(test)
     end
     local duration = (os.clock() - start_time) * 1000
     print(duration .. "ms to solve this puzzle")
