@@ -63,7 +63,7 @@ end
 
 -- add a constraint to the board via IDs
 -- section is a list of ids. Ex: {1, 3, 5}
-function TableSalt:addConstraintIDs(section, checkFunction, ...)
+function TableSalt:addConstraintByIDs(section, checkFunction, ...)
     local constraintNum = #self.constraints+1
     self.constraints[ constraintNum ] = constraint:new(section, checkFunction, ...)
     for i,v in ipairs(section) do
@@ -73,12 +73,12 @@ end
 
 -- add a constraint to the board via x,y position
 -- section is a list of x,y pairs. Ex: { {1,2}, {4,6}, {7,8} }
-function TableSalt:addConstraintPairs(section, checkFunction, ...)
+function TableSalt:addConstraintByPairs(section, checkFunction, ...)
     local newSectionList = {}
     for i, v in ipairs(section) do
         newSectionList[i] = self:getCellID(v[1], v[2])
     end
-    self:addConstraintIDs(newSectionList, checkFunction, ...)
+    self:addConstraintByIDs(newSectionList, checkFunction, ...)
 end
 
 function TableSalt:addConstraintForEachRow(checkFunction, ...)
@@ -87,7 +87,7 @@ function TableSalt:addConstraintForEachRow(checkFunction, ...)
         for j = 1, self.sizeX do
             row[ #row+1 ] = self:getCellID(j, i)
         end
-        self:addConstraintIDs(row, checkFunction, ...)
+        self:addConstraintByIDs(row, checkFunction, ...)
     end
 end
 
@@ -97,7 +97,7 @@ function TableSalt:addConstraintForEachColumn(checkFunction, ...)
         for j = 1, self.sizeX do
             col[ #col+1 ] = self:getCellID(i, j)
         end
-        self:addConstraintIDs(col, checkFunction, ...)
+        self:addConstraintByIDs(col, checkFunction, ...)
     end
 end
 
@@ -106,7 +106,7 @@ function TableSalt:addConstraintForEntireTable(checkFunction, ...)
     for i = 1, self.size^2 do
         fullSection[ #fullSection+1 ] = i
     end
-    self:addConstraintIDs(fullSection, checkFunction, ...)
+    self:addConstraintByIDs(fullSection, checkFunction, ...)
 end
 
 -- sets the value of the cell to the actual value
@@ -151,27 +151,6 @@ function TableSalt.allDiff(section, board)
 
     -- return the new domains
     return newDomains
-end
-
-function TableSalt:printTable()
-    for j = 1, 9 do
-        local row = ""
-        for i = 1, 9 do
-            local val = self:getCellValueByPair(i, j)
-            if val ~= nil then
-                row = row .. val .. " "
-            else
-                row = row .. "?" .. " "
-            end
-            if i%3 == 0 then
-                row = row .. "|" .. " "
-            end
-        end
-        print(row)
-        if j % 3 == 0 then
-            print("- - - - - - - - - - - -")
-        end
-    end
 end
 
 function TableSalt:solveConstraints(addAnyVarOnChange)
@@ -259,7 +238,7 @@ function TableSalt:solveBackTrack()
 
         for q, v in ipairs(self.cells[cellIndex].domain) do
             -- clear old constraints and add one of the values to the constraints            
-            self:addConstraintIDs({cellIndex}, TableSalt.setVal, v)
+            self:addConstraintByIDs({cellIndex}, TableSalt.setVal, v)
 
             -- run it and handle the cases correctly
             local didItPass = self:solveConstraints(false)
@@ -280,100 +259,19 @@ function TableSalt:solveBackTrack()
     return false
 end
 
-local function solveSudoku(puzzle)
-    -- setup the board
-    local test = TableSalt:new(9, 9, {1,2,3,4,5,6,7,8,9})
-
-    -- import the puzzle to csp style
-    local start_time = os.clock()
-    local index = 1
-    for c in puzzle:gmatch"." do
-        if c ~= "0" then
-            test:addConstraintIDs({index}, TableSalt.setVal, tonumber(c))
-        end
-        index = index + 1
-    end
-    local duration = (os.clock() - start_time) * 1000
-    -- print(duration .. "ms to load puzzle")
-
-    -- add the various constraints needed to solve
-    for n = 0, 2 do
-        for k = 0, 2 do
-            local giantList = {}
-            for i = 1, 3 do
-                for j = 1, 3 do
-                    giantList[ #giantList+1 ] = {i+k*3, j+n*3}
-                end
+function TableSalt:printTable()
+    for j = 1, self.sizeY do
+        local row = ""
+        for i = 1, self.sizeX do
+            local val = self:getCellValueByPair(i, j)
+            if val ~= nil then
+                row = row .. val .. " "
+            else
+                row = row .. "?" .. " "
             end
-            test:addConstraintPairs(giantList, TableSalt.allDiff)
         end
-    end
-
-    -- SWEET LATIN SQUARES
-    test:addConstraintForEachColumn(TableSalt.allDiff)
-    test:addConstraintForEachRow(TableSalt.allDiff)
-
-    -- solve the puzzle
-    local passed = nil
-    local start_time = os.clock()
-    passed = test:solveConstraints(false)
-    if passed == false then
-        passed = test:solveBackTrack()
-    end
-    local duration = (os.clock() - start_time) * 1000
-    print(duration .. "ms to solve this puzzle")
-
-    test:printTable()
-
-    -- print out the solution    
-    print("Able to solve?: ", passed)
-
-    -- Debug Output (for when testing single puzzles)
-    -- for j = 1, 9 do
-    --     for i = 1, 9 do
-    --         local cell = test:getCellByPair(i, j)
-    --         if cell.value == nil then
-    --             print(test:getCellID(i, j), table.concat(cell.domain))
-    --         end
-    --     end
-    -- end
-
-    print("\n\n")
-
-    return passed, duration
-
-end
-
--- ATTEMPT loading up the 50 puzzles from sudoku.txt
-io.input("sudoku.txt")
--- Grid XX + newLine + 9 lines of (9 chars + 1 newline)
-local puzzles = {}
-for i = 1, 50 do
-    local t = io.read(string.len("Grid XX") + 1)
-    t = io.read(9*10)
-    t = t:gsub("%s+", "")
-    puzzles[i] = t
-end
-
--- solveSudoku(puzzles[40])
-
-local numPassed = 0
-local totalDuration = 0
-local smallestDuration = math.huge
-local longestDuration = -math.huge
-for i = 1, 50 do
-    local passed, duration = solveSudoku(puzzles[i])
-    if passed then
-        numPassed = numPassed + 1
-        totalDuration = totalDuration + duration
-        if duration < smallestDuration then
-            smallestDuration = duration
-        elseif duration > longestDuration then
-            longestDuration = duration
-        end
+        print(row)
     end
 end
 
-print("Passed " .. numPassed .."/50 = " .. numPassed/50*100 .. "%")
-print("Total Time: " .. totalDuration .. "ms Average Time: " .. totalDuration/50 .. "ms")
-print("Longest Duration: " .. longestDuration .. "ms Smallest Duration:" .. smallestDuration .. "ms")
+return TableSalt
