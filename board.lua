@@ -1,62 +1,10 @@
 -- The game board
 
 -- imports
-local class = require ('class')
+local util = require ('util/util')
+local class = util.class
+local deepcopy = util.deepcopy
 local heap = require ('util/Peaque/Peaque')
-
--- gotta deepcopy the table at times...
-local function ldeepcopy(orig)
-    local orig_type = type(orig)
-    local copy
-    if orig_type == 'table' then
-        copy = {}
-        for orig_key, orig_value in next, orig, nil do
-            copy[ldeepcopy(orig_key)] = ldeepcopy(orig_value)
-        end
-        setmetatable(copy, ldeepcopy(getmetatable(orig)))
-    else -- number, string, boolean, etc
-        copy = orig
-    end
-    return copy
-end
-
-local function complain (idx,msg)
-    error(('argument %d is not %s'):format(idx,msg),3)
-end
-
-local function check_meta (val)
-    if type(val) == 'table' then return true end
-    return getmetatable(val)
-end
-
---- can an object be iterated over with `ipairs`?
--- @param val any value.
-local function is_iterable (val)
-    local mt = check_meta(val)
-    if mt == true then return true end
-    return not(mt and mt.__pairs)
-end
-
-local function assert_arg_iterable (idx,val)
-    if not is_iterable(val) then
-        complain(idx,"iterable")
-    end
-end
-
-local function ydeepcopy(t)
-    if type(t) ~= 'table' then return t end
-    assert_arg_iterable(1,t)
-    local mt = getmetatable(t)
-    local res = {}
-    for k,v in pairs(t) do
-        if type(v) == 'table' then
-            v = ydeepcopy(v)
-        end
-        res[k] = v
-    end
-    setmetatable(res,mt)
-    return res
-end
 
 -- cell class
 -- creates a cell with various props
@@ -86,7 +34,7 @@ function board:initialize(sizeX, sizeY, domain)
     self.size = sizeX*sizeY
     self.cells = {}
     for i = 1, self.size^2 do
-        self.cells[i] = cell:new(i, ldeepcopy(domain))
+        self.cells[i] = cell:new(i, deepcopy(domain))
     end
     self.sections = {}
     self.constraints = {}
@@ -308,7 +256,7 @@ function board.solveDFS(boardly)
         for w, x in ipairs(boardly.constraints) do
             x.passed = false
         end
-        local oldboard = ydeepcopy(boardly)
+        local oldboard = deepcopy(boardly)
 
         for q, v in ipairs(boardly.cells[cellIndex].domain) do
             -- clear old constraints and add one of the values to the constraints            
