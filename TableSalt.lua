@@ -34,7 +34,7 @@ function TableSalt:initialize(sizeX, sizeY, domain)
     self.sizeY = sizeY
     self.size = sizeX*sizeY
     self.cells = {}
-    for i = 1, self.size^2 do
+    for i = 1, self.size do
         self.cells[i] = cell:new(i, deepcopy(domain))
     end
     self.constraints = {}
@@ -104,7 +104,7 @@ end
 
 function TableSalt:addConstraintForEntireTable(checkFunction, ...)
     local fullSection = {}
-    for i = 1, self.size^2 do
+    for i = 1, self.size do
         fullSection[ #fullSection+1 ] = i
     end
     self:addConstraintByIDs(fullSection, checkFunction, ...)
@@ -119,13 +119,19 @@ end
 function TableSalt.allDiff(section, board)
     local valuesToRemove = {}
     local newDomains = {}
+    local reverseValuesToRemove = {}
 
     -- determine which values have been set
     for i, v in ipairs(section) do
         local currentValue = board.cells[v].value 
         if currentValue ~= nil then
-            table.insert(valuesToRemove, currentValue)
-            newDomains[i] = {currentValue}
+            if reverseValuesToRemove[currentValue] == true then
+                newDomains[i] = {}
+            else
+                reverseValuesToRemove[currentValue] = true
+                table.insert(valuesToRemove, currentValue)
+                newDomains[i] = {currentValue}
+            end 
         end
     end
 
@@ -210,17 +216,31 @@ function TableSalt:solveConstraints(addVarsAfterAnyChange)
             currentConstraint.passed = passedCurrentConstraint
         end
     end
-    local passed = true
-    for _, cons in ipairs(self.constraints) do
-        if cons.passed == false then
-            passed = false
+    return self:hasPassed()
+end
+
+function TableSalt:hasPassed()
+    for i, v in ipairs(self.constraints) do
+        local currentDomains = v.check(self)
+        for q, r in ipairs(currentDomains) do
+            if #r ~= 1 then
+                return false
+            end
         end
     end
-    return passed
+    for i, v in ipairs(self.cells) do
+        if v.value == nil then
+            return false
+        end
+    end
+    return true
 end
 
 function TableSalt:solveBackTrack(addVarsAfterAnyChange)
-    local addVarsAfterAnyChange = addVarsAfterAnyChange or true
+    local addVarsAfterAnyChange = addVarsAfterAnyChange or false
+
+    if self:hasPassed() then return true end
+
     local smallestDomainSize = math.huge
     local cellIndex = nil
     for i = 1, self.size do
@@ -231,40 +251,46 @@ function TableSalt:solveBackTrack(addVarsAfterAnyChange)
         end
     end
     if cellIndex ~= nil then
-        -- make a copy of the old cells
         for w, x in ipairs(self.constraints) do
             x.passed = false
         end
-        local oldboard = deepcopy(self)
+
+        local cellCopy = deepcopy(self.cells)
+        local constraintCopy = deepcopy(self.constraints)
 
         for q, v in ipairs(self.cells[cellIndex].domain) do
-            -- clear old constraints and add one of the values to the constraints            
+            -- add constraint
             self:addConstraintByIDs({cellIndex}, TableSalt.setVal, v)
+            local passed = self:solveConstraints(addVarsAfterAnyChange)
 
-            -- run it and handle the cases correctly
-            local didItPass = self:solveConstraints(addVarsAfterAnyChange)
-            
-            if didItPass then
+            -- if it passes, we're golden
+            if passed == true then
                 return true
-            elseif didItPass == false then
-                -- Maybe we just need to iterate deeper?
-                local herp = self:solveBackTrack()
-                if herp == true then
-                    return herp
+            elseif passed == false then
+                local newLevel = self:solveBackTrack(addVarsAfterAnyChange)
+                if newLevel then return true else
+                    self.cells = cellCopy
+                    self.constraints = constraintCopy
                 end
+            else
+                self.cells = cellCopy
+                self.constraints = constraintCopy
             end
-            -- remove the constraint that was just added and try again
-            self = oldboard
+
         end
     end
-    return false
+end
+
+function TableSalt:solveBackTrack3()
+    print("Has it passed?: ", self:hasPassed())
 end
 
 function TableSalt:solve(addVarsAfterAnyChange)
     local addVarsAfterAnyChange = addVarsAfterAnyChange or true
     local passed = self:solveConstraints(addVarsAfterAnyChange)
+    -- local passed = false
     if not passed then
-        passed = self:solveBackTrack(addVarsAfterAnyChange)
+        passed = self:solveBackTrack()
     end
     return passed
 end
