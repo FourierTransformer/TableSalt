@@ -281,10 +281,6 @@ function TableSalt:solveBackTrack(addVarsAfterAnyChange)
     end
 end
 
-function TableSalt:solveBackTrack3()
-    print("Has it passed?: ", self:hasPassed())
-end
-
 function TableSalt:solve(addVarsAfterAnyChange)
     local addVarsAfterAnyChange = addVarsAfterAnyChange or true
     local passed = self:solveConstraints(addVarsAfterAnyChange)
