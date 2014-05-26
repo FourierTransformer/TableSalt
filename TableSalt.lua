@@ -1,10 +1,11 @@
 -- The game board
 
 -- imports
-local util = require ('util/util')
+local _PATH = (...):gsub('TableSalt/','') 
+local util = require (_PATH .. '/util/util')
 local class = util.class
 local deepcopy = util.deepcopy
-local heap = require ('util/Peaque/Peaque')
+local heap = require (_PATH .. '/util/Peaque/Peaque')
 
 -- cell class
 -- creates a cell with various props

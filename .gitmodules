@@ -1,3 +1,6 @@
 [submodule "util/Peaque"]
 	path = util/Peaque
 	url = git://github.com/FourierTransformer/Peaque.git
+[submodule "TableSalt"]
+	path = TableSalt
+	url = git://github.com/FourierTransformer/TableSalt.git
