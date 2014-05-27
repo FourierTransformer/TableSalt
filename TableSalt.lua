@@ -112,7 +112,11 @@ end
 
 -- sets the value of the cell to the actual value
 function TableSalt.setVal(section, board, val)
-    return {{val}}
+    local allValues = {}
+    for i = 1, #section do
+        allValues [ #allValues+1 ] = {val}
+    end
+    return allValues
 end
 
 -- ensures all numbers in a section are of a different value
