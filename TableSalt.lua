@@ -220,10 +220,10 @@ function TableSalt:solveConstraints(addVarsAfterAnyChange)
             currentConstraint.passed = passedCurrentConstraint
         end
     end
-    return self:hasPassed()
+    return self:isSolved()
 end
 
-function TableSalt:hasPassed()
+function TableSalt:isSolved()
     for i, v in ipairs(self.constraints) do
         local currentDomains = v.check(self)
         for q, r in ipairs(currentDomains) do
@@ -243,7 +243,8 @@ end
 function TableSalt:solveBackTrack(addVarsAfterAnyChange)
     local addVarsAfterAnyChange = addVarsAfterAnyChange or false
 
-    if self:hasPassed() then return true end
+    -- it shouldn't be, but just in case.
+    -- if self:isSolved() then return true end
 
     local smallestDomainSize = math.huge
     local cellIndex = nil
