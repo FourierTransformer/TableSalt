@@ -45,7 +45,7 @@ function TableSalt:getCellID(x, y)
 end
 
 function TableSalt:getCellValueByPair(x, y)
-    return self.cells[self:getCellID(x, y)].value
+    return self:getCellValueByID(self:getCellID(x, y))
 end
 
 function TableSalt:getCellValueByID(i)
@@ -53,7 +53,7 @@ function TableSalt:getCellValueByID(i)
 end
 
 function TableSalt:getCellByPair(x, y)
-    return self.cells[self:getCellID(x, y)]
+    return self:getCellByID(self:getCellID(x, y))
 end
 
 function TableSalt:getCellByID(i)
