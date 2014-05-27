@@ -52,6 +52,14 @@ function TableSalt:getCellValueByID(i)
     return self.cells[i].value
 end
 
+function TableSalt:getCellDomainByPair(x, y)
+    return self:getCellDomainByID(self:getCellID(x, y))
+end
+
+function TableSalt:getCellDomainByID(i)
+    return self.cells[i].domain
+end
+
 function TableSalt:getCellByPair(x, y)
     return self:getCellByID(self:getCellID(x, y))
 end
@@ -127,7 +135,7 @@ function TableSalt.allDiff(section, board)
 
     -- determine which values have been set
     for i, v in ipairs(section) do
-        local currentValue = board.cells[v].value 
+        local currentValue = board:getCellValueByID(v)
         if currentValue ~= nil then
             if reverseValuesToRemove[currentValue] == true then
                 newDomains[i] = {}
@@ -141,8 +149,8 @@ function TableSalt.allDiff(section, board)
 
     -- remove those values from the domain of the others
     for ind, w in ipairs(section) do
-        local currentValue = board.cells[w].value
-        local currentDomain = board.cells[w].domain
+        local currentValue = board:getCellValueByID(w)
+        local currentDomain = board:getCellDomainByID(w)
         if currentValue == nil then
             local indicesToRemove = {}
             for i, v in ipairs(currentDomain) do
@@ -164,7 +172,27 @@ function TableSalt.allDiff(section, board)
     return newDomains
 end
 
+function TableSalt:isSolved()
+    for i, v in ipairs(self.constraints) do
+        local currentDomains = v.check(self)
+        for q, r in ipairs(currentDomains) do
+            if #r ~= 1 then
+                return false
+            end
+        end
+    end
+    for i, v in ipairs(self.cells) do
+        if v.value == nil then
+            return false
+        end
+    end
+    return true
+end
+
 function TableSalt:solveConstraints(addVarsAfterAnyChange)
+    -- sanity checks
+    if self:isSolved() then return true end
+
     local addVarsAfterAnyChange = addVarsAfterAnyChange or false
     local frontier = heap:new()
     for i, v in ipairs(self.constraints) do
@@ -223,28 +251,11 @@ function TableSalt:solveConstraints(addVarsAfterAnyChange)
     return self:isSolved()
 end
 
-function TableSalt:isSolved()
-    for i, v in ipairs(self.constraints) do
-        local currentDomains = v.check(self)
-        for q, r in ipairs(currentDomains) do
-            if #r ~= 1 then
-                return false
-            end
-        end
-    end
-    for i, v in ipairs(self.cells) do
-        if v.value == nil then
-            return false
-        end
-    end
-    return true
-end
-
 function TableSalt:solveBackTrack(addVarsAfterAnyChange)
     local addVarsAfterAnyChange = addVarsAfterAnyChange or false
 
-    -- it shouldn't be, but just in case.
-    -- if self:isSolved() then return true end
+    -- sanity checks
+    if self:isSolved() then return true end
 
     local smallestDomainSize = math.huge
     local cellIndex = nil
@@ -256,9 +267,6 @@ function TableSalt:solveBackTrack(addVarsAfterAnyChange)
         end
     end
     if cellIndex ~= nil then
-        for w, x in ipairs(self.constraints) do
-            x.passed = false
-        end
 
         local cellCopy = deepcopy(self.cells)
         local constraintCopy = deepcopy(self.constraints)
