@@ -359,11 +359,11 @@ end
 
 function TableSalt:print()
     if self.usingTable then
-        -- I could do this, but it messes with the order that the user inputted...
+        -- I could do this, but it messes with the order of the user input. Gotta have happy users!
         -- for i in pairs(self.tableVals) do
         --     print(i, self:getCellValueByName(i))
         -- end
-        -- So, I'll just store a copy of what they inputted and use that!
+        -- and this is the only reason I stored the original user input! teehee!
         for i, v in ipairs(self.normalVals) do
             print(v, self:getCellValueByID(i))
         end
