@@ -29,10 +29,30 @@ end
 -- TableSalt class
 -- creates an nxm board of "cells"
 local TableSalt = class()
-function TableSalt:initialize(sizeX, sizeY, domain)
-    self.sizeX = sizeX
-    self.sizeY = sizeY
-    self.size = sizeX*sizeY
+function TableSalt:initialize(domain, sizeX, sizeY)
+    -- set a "flag"
+    self.usingTable = false
+    if type(sizeX) == "table" then
+        self.usingTable = true
+    end
+
+    -- handle input correctly
+    self.tableVals = nil
+    self.normalVals = nil
+    if self.usingTable then
+        self.sizeX = #sizeX
+        self.normalVals = sizeX
+        -- invert table to get id's
+        self.tableVals = {}
+        for i, v in ipairs(sizeX) do
+            self.tableVals[v] = i
+        end
+    else
+        self.sizeX = sizeX
+    end
+
+    self.sizeY = sizeY or 1
+    self.size = self.sizeX * self.sizeY
     self.cells = {}
     for i = 1, self.size do
         self.cells[i] = cell:new(i, deepcopy(domain))
@@ -40,28 +60,44 @@ function TableSalt:initialize(sizeX, sizeY, domain)
     self.constraints = {}
 end
 
-function TableSalt:getCellID(x, y)
+function TableSalt:getCellIDByName(n)
+    return self.tableVals[n]
+end
+
+function TableSalt:getCellIDByPair(x, y)
     return (y-1)*self.sizeY+x
 end
 
+function TableSalt:getCellValueByName(n)
+    return self:getCellValueByID(self:getCellIDByName(n))
+end
+
 function TableSalt:getCellValueByPair(x, y)
-    return self:getCellValueByID(self:getCellID(x, y))
+    return self:getCellValueByID(self:getCellIDByPair(x, y))
 end
 
 function TableSalt:getCellValueByID(i)
     return self.cells[i].value
 end
 
+function TableSalt:getCellDomainByName(n)
+    return self:getCellDomainByID(self:getCellIDByName(n))
+end
+
 function TableSalt:getCellDomainByPair(x, y)
-    return self:getCellDomainByID(self:getCellID(x, y))
+    return self:getCellDomainByID(self:getCellIDByPair(x, y))
 end
 
 function TableSalt:getCellDomainByID(i)
     return self.cells[i].domain
 end
 
+function TableSalt:getCellByName(n)
+    return self:getCellByID(self:getCellIDByName(n))
+end
+
 function TableSalt:getCellByPair(x, y)
-    return self:getCellByID(self:getCellID(x, y))
+    return self:getCellByID(self:getCellIDByPair(x, y))
 end
 
 function TableSalt:getCellByID(i)
@@ -85,7 +121,17 @@ end
 function TableSalt:addConstraintByPairs(section, checkFunction, ...)
     local newSectionList = {}
     for i, v in ipairs(section) do
-        newSectionList[i] = self:getCellID(v[1], v[2])
+        newSectionList[i] = self:getCellIDByPair(v[1], v[2])
+    end
+    self:addConstraintByIDs(newSectionList, checkFunction, ...)
+end
+
+-- add a constraint based on the name given in the input table
+-- section is a list of names. Ex: { "WA", "NT", "SA" }
+function TableSalt:addConstraintByNames(section, checkFunction, ...)
+    local newSectionList = {}
+    for i, v in ipairs(section) do
+        newSectionList[i] = self:getCellIDByName(v)
     end
     self:addConstraintByIDs(newSectionList, checkFunction, ...)
 end
@@ -94,7 +140,7 @@ function TableSalt:addConstraintForEachRow(checkFunction, ...)
     for i = 1, self.sizeY do
         local row = {}
         for j = 1, self.sizeX do
-            row[ #row+1 ] = self:getCellID(j, i)
+            row[ #row+1 ] = self:getCellIDByPair(j, i)
         end
         self:addConstraintByIDs(row, checkFunction, ...)
     end
@@ -104,7 +150,7 @@ function TableSalt:addConstraintForEachColumn(checkFunction, ...)
     for i = 1, self.sizeY do
         local col = {}
         for j = 1, self.sizeX do
-            col[ #col+1 ] = self:getCellID(i, j)
+            col[ #col+1 ] = self:getCellIDByPair(i, j)
         end
         self:addConstraintByIDs(col, checkFunction, ...)
     end
@@ -181,6 +227,8 @@ function TableSalt:isSolved()
             end
         end
     end
+
+    -- Much redundant. Very wow.
     for i, v in ipairs(self.cells) do
         if v.value == nil then
             return false
@@ -232,7 +280,7 @@ function TableSalt:solveConstraints(addVarsAfterAnyChange)
                     return nil
                 end
 
-                -- -- add any constraints associated with a changed domain
+                -- add any constraints associated with a changed domain
                 if addVarsAfterAnyChange and oldSize ~= #v then
                     for i, v in ipairs(currentConstraint.section) do
                         local cellIndex = currentConstraint.section[i]
@@ -264,6 +312,11 @@ function TableSalt:solveBackTrack(addVarsAfterAnyChange)
         if currentDomainSize > 1 and currentDomainSize < smallestDomainSize then
             smallestDomainSize = currentDomainSize
             cellIndex = i
+        elseif currentDomainSize == smallestDomainSize then
+            -- Degree based backing
+            if #self.cells[i].constraints > #self.cells[cellIndex].constraints then
+                cellIndex = i
+            end
         end
     end
     if cellIndex ~= nil then
@@ -295,7 +348,7 @@ function TableSalt:solveBackTrack(addVarsAfterAnyChange)
 end
 
 function TableSalt:solve(addVarsAfterAnyChange)
-    local addVarsAfterAnyChange = addVarsAfterAnyChange or true
+    local addVarsAfterAnyChange = addVarsAfterAnyChange or false
     local passed = self:solveConstraints(addVarsAfterAnyChange)
     -- local passed = false
     if not passed then
@@ -304,18 +357,30 @@ function TableSalt:solve(addVarsAfterAnyChange)
     return passed
 end
 
-function TableSalt:printTable()
-    for j = 1, self.sizeY do
-        local row = ""
-        for i = 1, self.sizeX do
-            local val = self:getCellValueByPair(i, j)
-            if val ~= nil then
-                row = row .. val .. " "
-            else
-                row = row .. "?" .. " "
-            end
+function TableSalt:print()
+    if self.usingTable then
+        -- I could do this, but it messes with the order that the user inputted...
+        -- for i in pairs(self.tableVals) do
+        --     print(i, self:getCellValueByName(i))
+        -- end
+        -- So, I'll just store a copy of what they inputted and use that!
+        for i, v in ipairs(self.normalVals) do
+            print(v, self:getCellValueByID(i))
         end
-        print(row)
+
+    else
+        for j = 1, self.sizeY do
+            local row = ""
+            for i = 1, self.sizeX do
+                local val = self:getCellValueByPair(i, j)
+                if val ~= nil then
+                    row = row .. val .. " "
+                else
+                    row = row .. "?" .. " "
+                end
+            end
+            print(row)
+        end
     end
 end
 
