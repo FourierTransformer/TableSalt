@@ -314,9 +314,9 @@ function TableSalt:solveBackTrack(addVarsAfterAnyChange)
             cellIndex = i
         elseif currentDomainSize == smallestDomainSize then
             -- Degree based backing
-            if #self.cells[i].constraints > #self.cells[cellIndex].constraints then
-                cellIndex = i
-            end
+            -- if #self.cells[i].constraints > #self.cells[cellIndex].constraints then
+            --     cellIndex = i
+            -- end
         end
     end
     if cellIndex ~= nil then
