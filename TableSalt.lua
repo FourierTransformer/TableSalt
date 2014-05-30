@@ -540,12 +540,12 @@ end
 
 function TableSalt:solveBackTrack2()
     local tinyIndex = getSmallestCellIndex(self)
-    -- local serial = self.cells[tinyIndex]:serialize()
-    -- print(serial)
-    -- cell.deserialize(serial, self.cells[tinyIndex])
-    -- serial = self.cells[tinyIndex]:serialize()
-    -- print(serial)
-    -- print("\n")
+    local serial = self.cells[tinyIndex]:serialize()
+    print(serial)
+    cell.deserialize(serial, self.cells[tinyIndex])
+    serial = self.cells[tinyIndex]:serialize()
+    print(serial)
+    print("\n")
     if tinyIndex ~= nil then
         
         for i,v in ipairs(self.cells[tinyIndex].domain) do
