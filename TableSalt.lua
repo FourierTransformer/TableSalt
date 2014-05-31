@@ -251,7 +251,7 @@ end
 
 function TableSalt:solveConstraints(addVarsAfterAnyChange, specificConstraints)
     -- sanity checks
-    if self:isFilled() then return true end
+    if self:isSolved() then return true end
 
     -- init some vars
     local addVarsAfterAnyChange = addVarsAfterAnyChange or false
@@ -320,7 +320,7 @@ function TableSalt:solveConstraints(addVarsAfterAnyChange, specificConstraints)
     end
 
     -- this is a little ballsy. It should really be self:isSolved(), but this is done for SPEED
-    return self:isFilled()
+    return self:isSolved()
 end
 
 function TableSalt:getSmallestCellIndex(degreeCheck)
