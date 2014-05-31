@@ -6,17 +6,6 @@ local util = require (_PATH .. '/util/util')
 local class = util.class
 local deepcopy = util.deepcopy
 local heap = require (_PATH .. '/util/Peaque/Peaque')
-ProFi = require 'ProFi'
-
--- sets the value of the cell to the actual value
-local TableSalt = class()
-function TableSalt.setVal(section, board, val)
-    local allValues = {}
-    for i = 1, #section do
-        allValues [ #allValues+1 ] = {val}
-    end
-    return allValues
-end
 
 -- cell class
 -- creates a cell with various props
@@ -26,55 +15,6 @@ function cell:initialize(id, domain)
     self.domain = domain
     self.value = nil
     self.constraints = {}
-end
-
-cell.__tostring = function(e)
-    return table.concat(e.domain, ",") .. ";" .. tostring(e.value)
-end
-
-local function split(str, pat)
-   local t = {}  -- NOTE: use {n = 0} in Lua-5.0
-   local fpat = "(.-)" .. pat
-   local last_end = 1
-   local s, e, cap = str:find(fpat, 1)
-   while s do
-      if s ~= 1 or cap ~= "" then
-     table.insert(t,cap)
-      end
-      last_end = e+1
-      s, e, cap = str:find(fpat, last_end)
-   end
-   if last_end <= #str then
-      cap = str:sub(last_end)
-      table.insert(t, cap)
-   end
-   return t
-end
-
-local function splitToNum(str, pat)
-   local t = {}  -- NOTE: use {n = 0} in Lua-5.0
-   local fpat = "(.-)" .. pat
-   local last_end = 1
-   local s, e, cap = str:find(fpat, 1)
-   cap = tonumber(cap)
-   while s do
-      if s ~= 1 or cap ~= "" then
-     table.insert(t,cap)
-      end
-      last_end = e+1
-      s, e, cap = str:find(fpat, last_end)
-   end
-   if last_end <= #str then
-      cap = str:sub(last_end)
-      table.insert(t, cap)
-   end
-   return t
-end
-
-function cell:deserialize(str1, str2)
-    -- add its values back
-    self.domain = splitToNum(str1, ",")
-    self.value = tonumber(str2)
 end
 
 function cell:setValue(value, board)
@@ -92,6 +32,7 @@ function constraint:initialize(section, checkFunction, ...)
 end
 
 -- TableSalt class
+local TableSalt = class()
 -- creates an nxm board of "cells"
 function TableSalt:initialize(domain, sizeX, sizeY)
     -- set a "flag"
@@ -167,8 +108,6 @@ end
 function TableSalt:getCellByID(i)
     return self.cells[i]
 end
-
--- should prolly be a toString override.
 
 -- add a constraint to the board via IDs
 -- section is a list of ids. Ex: {1, 3, 5}
@@ -273,7 +212,28 @@ function TableSalt.allDiff(section, board)
     return newDomains
 end
 
+-- sets the value of the cell to the actual value
+function TableSalt.setVal(section, board, val)
+    local allValues = {}
+    for i = 1, #section do
+        allValues [ #allValues+1 ] = {val}
+    end
+    return allValues
+end
+
+function TableSalt:isFilled()
+    for i, v in ipairs(self.cells) do
+        if v.value == nil then
+            return false
+        end
+    end
+    return true
+end
+
 function TableSalt:isSolved()
+
+    if not self:isFilled() then return false end
+
     for i, v in ipairs(self.constraints) do
         local currentDomains = v.check(self)
         for q, r in ipairs(currentDomains) do
@@ -283,86 +243,21 @@ function TableSalt:isSolved()
         end
     end
 
-    -- Much redundant. Very wow.
-    for i, v in ipairs(self.cells) do
-        if v.value == nil then
-            return false
-        end
-    end
     return true
+    
 end
 
-function TableSalt:solveConstraints(addVarsAfterAnyChange)
+function TableSalt:solveConstraints(addVarsAfterAnyChange, specificConstraints)
     -- sanity checks
-    if self:isSolved() then return true end
+    if self:isFilled() then return true end
 
-    local addVarsAfterAnyChange = addVarsAfterAnyChange or false
-    local frontier = heap:new()
-    for i, v in ipairs(self.constraints) do
-        frontier:push(v, v.numCells)
-    end
-    local lastVal = frontier:size()
-    while not frontier:isEmpty() do
-        local currentConstraint = frontier:pop()
-        if not currentConstraint.passed then
-            local newDomains = currentConstraint.check(self)
-            local passedCurrentConstraint = true
-            for i, v in ipairs(newDomains) do
-                -- gets the cell index from the constraint section list
-                local cellIndex = currentConstraint.section[i]
-
-                -- old domain size used to determine what constraints should be re-added
-                local oldSize = #self.cells[cellIndex].domain
-                local currentSize = #v
-
-                -- set the cell's domain to v
-                self.cells[cellIndex].domain = v
-
-                -- if the domain is greater than one for any value in the section, the constraint hasn't passed
-                if currentSize > 1 then
-                    passedCurrentConstraint = false
-                elseif self.cells[cellIndex].value == nil and #v == 1 then
-                    -- however, a cell's value may be set if the length of it's list is 1
-                    self.cells[cellIndex].value = v[1]
-
-                    -- add affected constraints back to queue
-                    for q, r in ipairs(self.cells[cellIndex].constraints) do
-                        frontier:push(self.constraints[r], lastVal)
-                        lastVal = lastVal+1
-                    end
-
-                elseif currentSize <= 0 then
-                    -- error("a cell's domain's size was less than 1, please check your constraints and try again")
-                    return nil
-                end
-
-                -- add any constraints associated with a changed domain
-                if addVarsAfterAnyChange and oldSize ~= currentSize then
-                    for i, v in ipairs(currentConstraint.section) do
-                        local cellIndex = currentConstraint.section[i]
-                        for q, r in ipairs(self.cells[cellIndex].constraints) do
-                            frontier:push(self.constraints[r], lastVal)
-                            lastVal = lastVal+1
-                        end
-                    end
-                end
-
-            end
-            -- update constraint status
-            currentConstraint.passed = passedCurrentConstraint
-        end
-    end
-    return self:isSolved()
-end
-
-function TableSalt:solveConstraints2(addVarsAfterAnyChange, cell)
-
+    -- init some vars
     local addVarsAfterAnyChange = addVarsAfterAnyChange or false
     local frontier = heap:new()
 
-    -- if a cell was passed in, use it's constraints. Otherwise use EVERYTHING.
-    if cell ~= nil then
-        for q, r in ipairs(cell.constraints) do
+    -- if specific constraints were passed in, use those. Otherwise use EVERYTHING.
+    if specificConstraints ~= nil then
+        for q, r in ipairs(specificConstraints) do
             local currentConstraint = self.constraints[r]
             frontier:push(currentConstraint, currentConstraint.numCells)
         end
@@ -372,7 +267,6 @@ function TableSalt:solveConstraints2(addVarsAfterAnyChange, cell)
         end
     end
 
-    local lastVal = frontier:size()
     while not frontier:isEmpty() do
         local currentConstraint = frontier:pop()
         if not currentConstraint.passed then
@@ -399,13 +293,22 @@ function TableSalt:solveConstraints2(addVarsAfterAnyChange, cell)
 
                     -- add affected constraints back to queue
                     for q, r in ipairs(currentCell.constraints) do
-                        frontier:push(self.constraints[r], lastVal)
-                        lastVal = lastVal+1
+                        frontier:push(self.constraints[r])
                     end
 
                 elseif currentSize <= 0 then
-                    -- error("a cell's domain's size was less than 1, please check your constraints and try again")
                     return nil
+                end
+
+                -- add any constraints associated with a changed domain
+                if addVarsAfterAnyChange and oldSize ~= currentSize then
+                    for i, v in ipairs(currentConstraint.section) do
+                        local cellIndex = currentConstraint.section[i]
+                        for q, r in ipairs(self.cells[cellIndex].constraints) do
+                            frontier:push(self.constraints[r], lastVal)
+                            lastVal = lastVal+1
+                        end
+                    end
                 end
 
             end
@@ -413,118 +316,50 @@ function TableSalt:solveConstraints2(addVarsAfterAnyChange, cell)
             currentConstraint.passed = passedCurrentConstraint
         end
     end
-    return self:isSolved()
+
+    -- this is a little ballsy. It should really be self:isSolved(), but this is done for SPEED
+    return self:isFilled()
 end
 
-
-function TableSalt:solveBackTrack(addVarsAfterAnyChange)
-    local addVarsAfterAnyChange = addVarsAfterAnyChange or false
-
-    -- sanity checks
-    if self:isSolved() then return true end
-
+function TableSalt:getSmallestCellIndex(degreeCheck)
     local smallestDomainSize = math.huge
     local cellIndex = nil
-    for i = 1, self.size do
-        local currentDomainSize = #self.cells[i].domain
-        if currentDomainSize > 1 and currentDomainSize < smallestDomainSize then
-            smallestDomainSize = currentDomainSize
-            cellIndex = i
-        elseif currentDomainSize == smallestDomainSize then
-            -- Degree based backing
-            -- if #self.cells[i].constraints > #self.cells[cellIndex].constraints then
-            --     cellIndex = i
-            -- end
-        end
-    end
-    if cellIndex ~= nil then
-
-        local cellCopy = deepcopy(self.cells)
-        local constraintCopy = deepcopy(self.constraints)
-
-        for q, v in ipairs(self.cells[cellIndex].domain) do
-            -- add constraint
-            self:addConstraintByIDs({cellIndex}, TableSalt.setVal, v)
-            local passed = self:solveConstraints(addVarsAfterAnyChange)
-            -- self.cells[cellIndex]:setValue(v)
-            -- local passed = self.cells[cellIndex]:checkConstraints(self)
-
-            -- if it passes, we're golden
-            if passed == true then
-                return true
-            elseif passed == false then
-                local newLevel = self:solveBackTrack(addVarsAfterAnyChange)
-                if newLevel then return true else
-                    self.cells = cellCopy
-                    self.constraints = constraintCopy
-                end
-            else
-                self.cells = cellCopy
-                self.constraints = constraintCopy
-            end
-
-        end
-    end
-end
-
-local function getSmallestCellIndex(board)
-    local smallestDomainSize = math.huge
-    local cellIndex = nil
-    -- for i = 1, board.size do
-    for i, v in ipairs(board.cells) do
+    for i, v in ipairs(self.cells) do
         local currentDomainSize = #v.domain
         if currentDomainSize > 1 and currentDomainSize < smallestDomainSize then
             -- return cellIndex
             smallestDomainSize = currentDomainSize
             cellIndex = i
-        elseif currentDomainSize == smallestDomainSize then
-            -- Degree based backing
-            -- if #board.cells[i].constraints > #board.cells[cellIndex].constraints then
-            --     cellIndex = i
-            -- end
+        elseif degreeCheck and currentDomainSize == smallestDomainSize then
+            -- Degree based back track
+            if #self.cells[i].constraints > #self.cells[cellIndex].constraints then
+                cellIndex = i
+            end
         end
     end
     return cellIndex
 end
 
-local function checkForNil(board)
-    local passed = true
-    local count = 0
-    for i = 1, board.size do
-        if board:getCellValueByID(i) == nil then
-            count = count + 1
-            passed = false
-        end
-    end
-    print("Failed with", count)
-    return passed
-end
-
-function TableSalt:serializeCells()
-    local serial1 = {}
-    local serial2 = {}
+function TableSalt:backupCells()
+    local serial = {{}, {}}
     for i, v in ipairs(self.cells) do
-        -- serial1 = serial1 .. table.concat(v.domain, ",") .. "|"
-        serial1[i] = {}
+        serial[1][i] = {}
         for q, r in ipairs(v.domain) do
-            serial1[i][q] = r
+            serial[1][i][q] = r
         end
-        serial2[i] = v.value
+        serial[2][i] = v.value
     end
-    return serial1, serial2
+    return serial
 end
 
-function TableSalt:deserializeCells(str1, str2)
-    -- local domains = split(str1, "|")
-    -- local values = split(str2, "|")
+function TableSalt:restoreCells(serial)
     for i, v in ipairs(self.cells) do
-        -- v:deserialize(domains[i], values[i])
-        v.domain = str1[i]
-        v.value = str2[i]
+        v.domain = serial[1][i]
+        v.value = serial[2][i]
     end
 end
 
-function TableSalt:serializeConstraints()
+function TableSalt:backupConstraints()
     local serial = {}
     for i, v in ipairs(self.constraints) do
         serial[i] = v.passed
@@ -532,44 +367,48 @@ function TableSalt:serializeConstraints()
     return serial
 end
 
-function TableSalt:deserializeConstraints(passedArray)
+function TableSalt:restoreConstraints(passedArray)
     for i, v in ipairs(self.constraints) do
         v.passed = passedArray[i]
     end    
 end
 
-function TableSalt:solveBackTrack2()
-    local tinyIndex = getSmallestCellIndex(self)
+function TableSalt:solveBackTrack(degreeCheck, addVarsAfterAnyChange)
+    -- find the cell with the smallest domain
+    local tinyIndex = self:getSmallestCellIndex(degreeCheck)
+
+    -- IT EXISTS! Therefore, we can do magic.
     if tinyIndex ~= nil then
-        
         for i,v in ipairs(self.cells[tinyIndex].domain) do
-            -- local cellCopy = deepcopy(self.cells)
-            local domains, values = self:serializeCells()
-            local constraintCopy = self:serializeConstraints()
+            -- copy the data (in case the constraints fail)
+            local domains, values = self:backupCells()
+            local constraintCopy = self:backupConstraints()
 
             -- set the value, then try solving the constraints
             self.cells[tinyIndex]:setValue(v)
-            local wasSucessful = self:solveConstraints2(false, self.cells[tinyIndex])
+            local wasSucessful = self:solveConstraints(addVarsAfterAnyChange, self.cells[tinyIndex].constraints)
 
             -- stupid tail recursion...
             if wasSucessful then
                 return true
             elseif wasSucessful == false then
-                local extremeLevel = self:solveBackTrack2()
+                local extremeLevel = self:solveBackTrack(addVarsAfterAnyChange)
                 if extremeLevel then return true end
             end
-            -- self.cells = cellCopy
-            self:deserializeCells(domains, values)
-            self:deserializeConstraints(constraintCopy)
+
+            -- restore values if things go bad.
+            self:restoreCells(domains, values)
+            self:restoreConstraints(constraintCopy)
         end
     end
 end
 
-function TableSalt:solve(addVarsAfterAnyChange)
+function TableSalt:solve(degreeCheck, addVarsAfterAnyChange)
     local addVarsAfterAnyChange = addVarsAfterAnyChange or false
-    local passed = self:solveConstraints2(addVarsAfterAnyChange)
+    local degreeCheck = degreeCheck or false
+    local passed = self:solveConstraints(addVarsAfterAnyChange)
     if not passed then
-        passed = self:solveBackTrack2()
+        passed = self:solveBackTrack(degreeCheck, addVarsAfterAnyChange)
     end
     return passed
 end
