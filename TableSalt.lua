@@ -1,12 +1,61 @@
--- The game board
+#!/usr/bin/env lua
+---------------
+-- ## TableSalt, Lua module for constraint satisfaction problems
+-- @author Shakil Thakur
+-- @copyright 2014
+-- @license MIT
+-- @script TableSalt
 
--- imports
+-- ================
+-- requires and such
+-- ================
 local _PATH = (...):gsub('TableSalt/','') 
-local class = require (_PATH .. '/util/util')
+local class = require(_PATH .. '/util/util')
 local heap = require (_PATH .. '/util/Peaque/Peaque')
 
--- cell class
--- creates a cell with various props
+-- ================
+-- Private methods
+-- ================
+-- The following four are oddly specifc restore/backup functions. Done this way for Speed/privacy.
+local function backupCells(cells)
+    local serial = {{}, {}}
+    for i, v in ipairs(cells) do
+        serial[1][i] = {}
+        for q, r in ipairs(v.domain) do
+            serial[1][i][q] = r
+        end
+        serial[2][i] = v.value
+    end
+    return serial
+end
+
+local function restoreCells(cells, serial)
+    for i, v in ipairs(cells) do
+        v.domain = serial[1][i]
+        v.value = serial[2][i]
+    end
+end
+
+local function backupConstraints(constraints)
+    local serial = {}
+    for i, v in ipairs(constraints) do
+        serial[i] = v.passed
+    end
+    return serial
+end
+
+local function restoreConstraints(constraints, passedArray)
+    for i, v in ipairs(constraints) do
+        v.passed = passedArray[i]
+    end    
+end
+
+-- ================
+-- Module classes
+-- ================
+
+--- `cell` class
+-- @type cell
 local cell = class()
 function cell:initialize(id, domain)
     self.id = id
@@ -15,11 +64,8 @@ function cell:initialize(id, domain)
     self.constraints = {}
 end
 
-function cell:setValue(value, board)
-    self.value = value
-    self.domain = {value}
-end
-
+--- `constraint` class
+-- @type constraint
 local constraint = class()
 function constraint:initialize(section, checkFunction, ...)
     self.passed = false
@@ -29,9 +75,23 @@ function constraint:initialize(section, checkFunction, ...)
     self.check = function(board) return checkFunction(self.section, board, self.args) end
 end
 
--- TableSalt class
+--- `TableSalt` class
+-- @type TableSalt
 local TableSalt = class()
--- creates an nxm board of "cells"
+
+--- Creates a new `TableSalt` instance. This will initialize a table, where each cell has a unique id which hold
+-- a value and a domain that can be accessed through various getters, as described below.
+-- @name TableSalt:new
+-- @param domain the domain for each of the cells in the problem
+-- @param sizeX the length of the input or a table representing the variables
+-- @param sizeY (optional) - the height of the domain space if the CSP exists over a grid
+-- @return a new `TableSalt` instance
+-- @usage
+-- local TableSalt = require('TableSalt/TableSalt')
+-- local aussie = TableSalt:new({"Red", "Green", "Blue"}, {"WA", "NT", "SA", "Q", "NSW", "V", "T"}) -- for the australia coloring problem.
+-- local sudoku = TableSalt:new({1,2,3,4,5,6,7,8,9}, 9, 9) -- for sudoku. Creates a 9x9 grid
+-- local linear = TableSalt:new({1,2,3,4,5,6,7,8,9}, 9) -- basically creates a 9x1 grid, for problems that don't really require a grid, but can be enumerated
+--
 function TableSalt:initialize(domain, sizeX, sizeY)
     -- set a "flag"
     self.usingTable = false
@@ -67,52 +127,120 @@ function TableSalt:initialize(domain, sizeX, sizeY)
     self.constraints = {}
 end
 
-function TableSalt:getCellIDByName(n)
+--- Returns the id given a variable name
+-- @param n the name of a variable used in the problem
+-- @return the id associated with the given name
+-- @usage
+-- local aussie = TableSalt:new({"Red", "Green", "Blue"}, {"WA", "NT", "SA", "Q", "NSW", "V", "T"})
+-- aussie:getIDByName("NSW") -- will return the ID for NSW
+--
+function TableSalt:getIDByName(n)
     return self.tableVals[n]
 end
 
-function TableSalt:getCellIDByPair(x, y)
+--- Returns the id given a pair. `(0,0)` represents the top left
+-- @param x the x position from the left
+-- @param y the y position from the top
+-- @return the id associated with the pair
+-- @usage
+-- local sudoku = TableSalt:new({1,2,3,4,5,6,7,8,9}, 9, 9)
+-- sudoku:getIDByPair(5,5) -- will return the id of the centermost cell
+--
+function TableSalt:getIDByPair(x, y)
     return (y-1)*self.sizeY+x
 end
 
-function TableSalt:getCellValueByName(n)
-    return self:getCellValueByID(self:getCellIDByName(n))
-end
-
-function TableSalt:getCellValueByPair(x, y)
-    return self:getCellValueByID(self:getCellIDByPair(x, y))
-end
-
-function TableSalt:getCellValueByID(i)
+--- Returns the value given the id
+-- @param i the id of the cell
+-- @return the value associated with the given id or `nil` if it hasn't been set.
+-- @usage
+-- local linear = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 8)
+-- -- various problem constraints would go here
+-- linear:solve()
+-- linear:getValueByID(7) -- will return the value for the 7th item
+--
+function TableSalt:getValueByID(i)
     return self.cells[i].value
 end
 
-function TableSalt:getCellDomainByName(n)
-    return self:getCellDomainByID(self:getCellIDByName(n))
+--- Returns the value given a name
+-- @param n the name of the variable
+-- @return the value associated with the given name or `nil` if it hasn't been set.
+-- @usage
+-- local aussie = TableSalt:new({"Red", "Green", "Blue"}, {"WA", "NT", "SA", "Q", "NSW", "V", "T"})
+-- -- the various australia color problem constraints would go here
+-- aussie:solveForwardCheck()
+-- aussie:getValueByName("WA") -- will return the value that was set for "WA" (western australia)
+--
+function TableSalt:getValueByName(n)
+    return self:getValueByID(self:getIDByName(n))
 end
 
-function TableSalt:getCellDomainByPair(x, y)
-    return self:getCellDomainByID(self:getCellIDByPair(x, y))
+--- Returns the value given a pair. `(0,0)` represents the top left
+-- @param x the x position from the left
+-- @param y the y position from the top
+-- @return the value associated with the pair or `nil` if it hasn't been set.
+-- @usage
+-- local sudoku = TableSalt:new({1,2,3,4,5,6,7,8,9}, 9, 9)
+-- -- the various sudoku constraints would go here
+-- sudoku:solve()
+-- sudoku:getValueByPair(5,5) -- will return the value of the centermost cell.
+--
+function TableSalt:getValueByPair(x, y)
+    return self:getValueByID(self:getIDByPair(x, y))
 end
 
-function TableSalt:getCellDomainByID(i)
+--- Returns the domain given the id.
+-- @param i the id
+-- @return the domain (as a table) associated with the id. `{nil}` if empty
+-- @usage
+-- local linear = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 8)
+-- -- various problem constraints would go here
+-- linear:solveConstraints()
+-- linear:getDomainyID(7) -- will return the domain for the 7th item. Ex: {4, 6, 8}
+--
+function TableSalt:getDomainByID(i)
     return self.cells[i].domain
 end
 
-function TableSalt:getCellByName(n)
-    return self:getCellByID(self:getCellIDByName(n))
+--- Returns the domain given a name
+-- @param n the name of the variable
+-- @return the domain (as a table) associated with the given name. `{nil}` if empty
+-- @usage
+-- local aussie = TableSalt:new({"Red", "Green", "Blue"}, {"WA", "NT", "SA", "Q", "NSW", "V", "T"})
+-- -- the various australia color problem constraints would go here
+-- aussie:solveForwardCheck()
+-- aussie:getDomainByName("WA") -- will return the domain for "WA" Ex: {"Green"}
+--
+function TableSalt:getDomainByName(n)
+    return self:getDomainByID(self:getIDByName(n))
 end
 
-function TableSalt:getCellByPair(x, y)
-    return self:getCellByID(self:getCellIDByPair(x, y))
+--- Returns the domain given a pair. `(0,0)` represents the top left
+-- @param x the x position from the left
+-- @param y the y position from the top
+-- @return the domain (as a table) associated with the given pair. `{nil}` if empty
+-- @usage
+-- local sudoku = TableSalt:new({1,2,3,4,5,6,7,8,9}, 9, 9)
+-- -- the various sudoku constraints would go here
+-- sudoku:solveConstraints()
+-- sudoku:getDomainByPair(5,5) -- will return the domain of the centermost cell. Ex: {1, 3, 5}
+-- sudoku:solveForwardCheck()
+-- sudoku:getDomainByPair(5,5) -- should be solved, so only one thing in the domain. Ex: {5}
+--
+function TableSalt:getDomainByPair(x, y)
+    return self:getDomainByID(self:getIDByPair(x, y))
 end
 
-function TableSalt:getCellByID(i)
-    return self.cells[i]
-end
-
--- add a constraint to the board via IDs
--- section is a list of ids. Ex: {1, 3, 5}
+--- add a constraint to the board via IDs
+-- @param section a table of id's
+-- @param checkFunction a function which reduces domains based on a constraint
+-- @param ... any additional arguments checkFunction requires
+-- @usage
+-- local linear = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9)
+-- --id's 1, 3, and 5 have to be different
+-- linear:addConstraintByIDs({1, 3, 5}, TableSalt.allDiff)
+--
 function TableSalt:addConstraintByIDs(section, checkFunction, ...)
     local constraintNum = #self.constraints+1
     self.constraints[ constraintNum ] = constraint:new(section, checkFunction, ...)
@@ -121,22 +249,35 @@ function TableSalt:addConstraintByIDs(section, checkFunction, ...)
     end
 end
 
--- add a constraint to the board via x,y position
--- section is a list of x,y pairs. Ex: { {1,2}, {4,6}, {7,8} }
+--- add a constraint to the board via x,y position
+-- @param section a table of x,y pairs
+-- @param checkFunction a function which reduces domains based on a constraint
+-- @param ... any additional arguments checkFunction requires
+-- @usage
+-- local sudoku = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9, 9)
+-- -- (1, 1), (5, 2), and (7, 2) all have a value of 4
+-- sudoku:addConstraintByPairs({ {1, 1}, {5, 2}, {7, 2} }, TableSalt.setVal, 4)
+--
 function TableSalt:addConstraintByPairs(section, checkFunction, ...)
     local newSectionList = {}
     for i, v in ipairs(section) do
-        newSectionList[i] = self:getCellIDByPair(v[1], v[2])
+        newSectionList[i] = self:getIDByPair(v[1], v[2])
     end
     self:addConstraintByIDs(newSectionList, checkFunction, ...)
 end
 
--- add a constraint based on the name given in the input table
--- section is a list of names. Ex: { "WA", "NT", "SA" }
+--- add a constraint based on the name given in the input table
+-- @param section a table of names
+-- @param checkFunction a function which reduces domains based on a constraint
+-- @param ... any additional arguments checkFunction requires
+-- @usage
+-- local aussie = TableSalt:new({"Red", "Green", "Blue"}, {"WA", "NT", "SA", "Q", "NSW", "V", "T"})
+-- aussie:addConstraintByNames({ "WA", "NT", "SA" }, TableSalt.allDiff)
+--
 function TableSalt:addConstraintByNames(section, checkFunction, ...)
     local newSectionList = {}
     for i, v in ipairs(section) do
-        newSectionList[i] = self:getCellIDByName(v)
+        newSectionList[i] = self:getIDByName(v)
     end
     self:addConstraintByIDs(newSectionList, checkFunction, ...)
 end
@@ -145,7 +286,7 @@ function TableSalt:addConstraintForEachRow(checkFunction, ...)
     for i = 1, self.sizeY do
         local row = {}
         for j = 1, self.sizeX do
-            row[ #row+1 ] = self:getCellIDByPair(j, i)
+            row[ #row+1 ] = self:getIDByPair(j, i)
         end
         self:addConstraintByIDs(row, checkFunction, ...)
     end
@@ -155,7 +296,7 @@ function TableSalt:addConstraintForEachColumn(checkFunction, ...)
     for i = 1, self.sizeY do
         local col = {}
         for j = 1, self.sizeX do
-            col[ #col+1 ] = self:getCellIDByPair(i, j)
+            col[ #col+1 ] = self:getIDByPair(i, j)
         end
         self:addConstraintByIDs(col, checkFunction, ...)
     end
@@ -169,60 +310,6 @@ function TableSalt:addConstraintForEntireTable(checkFunction, ...)
     self:addConstraintByIDs(fullSection, checkFunction, ...)
 end
 
--- ensures all numbers in a section are of a different value
-function TableSalt.allDiff(section, board)
-    local valuesToRemove = {}
-    local newDomains = {}
-    local reverseValuesToRemove = {}
-
-    -- determine which values have been set
-    for i, v in ipairs(section) do
-        local currentValue = board:getCellValueByID(v)
-        if currentValue ~= nil then
-            if reverseValuesToRemove[currentValue] == true then
-                newDomains[i] = {}
-            else
-                reverseValuesToRemove[currentValue] = true
-                table.insert(valuesToRemove, currentValue)
-                newDomains[i] = {currentValue}
-            end 
-        end
-    end
-
-    -- remove those values from the domain of the others
-    for ind, w in ipairs(section) do
-        local currentValue = board:getCellValueByID(w)
-        local currentDomain = board:getCellDomainByID(w)
-        if currentValue == nil then
-            local indicesToRemove = {}
-            for i, v in ipairs(currentDomain) do
-                for j, t in ipairs(valuesToRemove) do
-                    if v == t then
-                        indicesToRemove[ #indicesToRemove+1 ] = i
-                    end
-                end
-            end
-
-            for i = #indicesToRemove, 1, -1 do
-                table.remove(currentDomain, indicesToRemove[i])
-            end
-            newDomains[ind] = currentDomain
-        end
-    end
-
-    -- return the new domains
-    return newDomains
-end
-
--- sets the value of the cell to the actual value
-function TableSalt.setVal(section, board, val)
-    local allValues = {}
-    for i = 1, #section do
-        allValues [ #allValues+1 ] = {val}
-    end
-    return allValues
-end
-
 function TableSalt:isFilled()
     for i, v in ipairs(self.cells) do
         if v.value == nil then
@@ -233,9 +320,10 @@ function TableSalt:isFilled()
 end
 
 function TableSalt:isSolved()
-
+    -- it should be filled
     if not self:isFilled() then return false end
 
+    -- run through all the constraints. Make sure they pass
     for i, v in ipairs(self.constraints) do
         local currentDomains = v.check(self)
         for q, r in ipairs(currentDomains) do
@@ -245,6 +333,7 @@ function TableSalt:isSolved()
         end
     end
 
+    -- WEEEEEEEEEEEEEEEEEEEE!
     return true
     
 end
@@ -323,7 +412,7 @@ function TableSalt:solveConstraints(addVarsAfterAnyChange, specificConstraints)
     return self:isSolved()
 end
 
-function TableSalt:getSmallestCellIndex(degreeCheck)
+function TableSalt:getSmallestDomainID(degreeCheck)
     local smallestDomainSize = math.huge
     local cellIndex = nil
     for i, v in ipairs(self.cells) do
@@ -342,65 +431,33 @@ function TableSalt:getSmallestCellIndex(degreeCheck)
     return cellIndex
 end
 
-function TableSalt:backupCells()
-    local serial = {{}, {}}
-    for i, v in ipairs(self.cells) do
-        serial[1][i] = {}
-        for q, r in ipairs(v.domain) do
-            serial[1][i][q] = r
-        end
-        serial[2][i] = v.value
-    end
-    return serial
-end
-
-function TableSalt:restoreCells(serial)
-    for i, v in ipairs(self.cells) do
-        v.domain = serial[1][i]
-        v.value = serial[2][i]
-    end
-end
-
-function TableSalt:backupConstraints()
-    local serial = {}
-    for i, v in ipairs(self.constraints) do
-        serial[i] = v.passed
-    end
-    return serial
-end
-
-function TableSalt:restoreConstraints(passedArray)
-    for i, v in ipairs(self.constraints) do
-        v.passed = passedArray[i]
-    end    
-end
-
-function TableSalt:solveBackTrack(degreeCheck, addVarsAfterAnyChange)
+function TableSalt:solveForwardCheck(degreeCheck, addVarsAfterAnyChange)
     -- find the cell with the smallest domain
-    local tinyIndex = self:getSmallestCellIndex(degreeCheck)
+    local tinyIndex = self:getSmallestDomainID(degreeCheck)
 
     -- IT EXISTS! Therefore, we can do magic.
     if tinyIndex ~= nil then
         for i,v in ipairs(self.cells[tinyIndex].domain) do
             -- copy the data (in case the constraints fail)
-            local domains, values = self:backupCells()
-            local constraintCopy = self:backupConstraints()
+            local cellCopy = backupCells(self.cells)
+            local constraintCopy = backupConstraints(self.constraints)
 
             -- set the value, then try solving the constraints
-            self.cells[tinyIndex]:setValue(v)
+            self.cells[tinyIndex].value = v
+            self.cells[tinyIndex].domain = {v}
             local wasSucessful = self:solveConstraints(addVarsAfterAnyChange, self.cells[tinyIndex].constraints)
 
             -- stupid tail recursion...
             if wasSucessful then
                 return true
             elseif wasSucessful == false then
-                local extremeLevel = self:solveBackTrack(addVarsAfterAnyChange)
+                local extremeLevel = self:solveForwardCheck(addVarsAfterAnyChange)
                 if extremeLevel then return true end
             end
 
             -- restore values if things go bad.
-            self:restoreCells(domains, values)
-            self:restoreConstraints(constraintCopy)
+            restoreCells(self.cells, cellCopy)
+            restoreConstraints(self.constraints, constraintCopy)
         end
     end
 end
@@ -410,27 +467,81 @@ function TableSalt:solve(degreeCheck, addVarsAfterAnyChange)
     local degreeCheck = degreeCheck or false
     local passed = self:solveConstraints(addVarsAfterAnyChange)
     if not passed then
-        passed = self:solveBackTrack(degreeCheck, addVarsAfterAnyChange)
+        passed = self:solveForwardCheck(degreeCheck, addVarsAfterAnyChange)
     end
     return passed
+end
+
+-- ensures all numbers in a section are of a different value
+function TableSalt.allDiff(section, board)
+    local valuesToRemove = {}
+    local newDomains = {}
+    local reverseValuesToRemove = {}
+
+    -- determine which values have been set
+    for i, v in ipairs(section) do
+        local currentValue = board:getValueByID(v)
+        if currentValue ~= nil then
+            if reverseValuesToRemove[currentValue] == true then
+                newDomains[i] = {}
+            else
+                reverseValuesToRemove[currentValue] = true
+                table.insert(valuesToRemove, currentValue)
+                newDomains[i] = {currentValue}
+            end 
+        end
+    end
+
+    -- remove those values from the domain of the others
+    for ind, w in ipairs(section) do
+        local currentValue = board:getValueByID(w)
+        local currentDomain = board:getDomainByID(w)
+        if currentValue == nil then
+            local indicesToRemove = {}
+            for i, v in ipairs(currentDomain) do
+                for j, t in ipairs(valuesToRemove) do
+                    if v == t then
+                        indicesToRemove[ #indicesToRemove+1 ] = i
+                    end
+                end
+            end
+
+            for i = #indicesToRemove, 1, -1 do
+                table.remove(currentDomain, indicesToRemove[i])
+            end
+            newDomains[ind] = currentDomain
+        end
+    end
+
+    -- return the new domains
+    return newDomains
+end
+
+-- sets the value of the cell to the actual value
+function TableSalt.setVal(section, board, val)
+    local allValues = {}
+    for i = 1, #section do
+        allValues [ #allValues+1 ] = {val}
+    end
+    return allValues
 end
 
 function TableSalt:print()
     if self.usingTable then
         -- I could do this, but it messes with the order of the user input. Gotta have happy users!
         -- for i in pairs(self.tableVals) do
-        --     print(i, self:getCellValueByName(i))
+        --     print(i, self:getValueByName(i))
         -- end
         -- and this is the only reason I stored the original user input! teehee!
         for i, v in ipairs(self.normalVals) do
-            print(v, self:getCellValueByID(i))
+            print(v, self:getValueByID(i))
         end
 
     else
         for j = 1, self.sizeY do
             local row = ""
             for i = 1, self.sizeX do
-                local val = self:getCellValueByPair(i, j)
+                local val = self:getValueByPair(i, j)
                 if val ~= nil then
                     row = row .. val .. " "
                 else
