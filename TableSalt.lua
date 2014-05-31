@@ -2,9 +2,7 @@
 
 -- imports
 local _PATH = (...):gsub('TableSalt/','') 
-local util = require (_PATH .. '/util/util')
-local class = util.class
-local deepcopy = util.deepcopy
+local class = require (_PATH .. '/util/util')
 local heap = require (_PATH .. '/util/Peaque/Peaque')
 
 -- cell class
@@ -60,7 +58,11 @@ function TableSalt:initialize(domain, sizeX, sizeY)
     self.size = self.sizeX * self.sizeY
     self.cells = {}
     for i = 1, self.size do
-        self.cells[i] = cell:new(i, deepcopy(domain))
+        local newDomain = {}
+        for j = 1, #domain do
+            newDomain[j] = domain[j]
+        end
+        self.cells[i] = cell:new(i, newDomain)
     end
     self.constraints = {}
 end
