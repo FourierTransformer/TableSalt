@@ -18,7 +18,7 @@ and to include it in your project: `local TableSalt = require('TableSalt/TableSa
 ## Quick Example
 TableSalt was designed to be user friendly. As such, you can setup the Australia Coloring Problem as such:
 
-```
+>```lua
 local australia = TableSalt:new({"Red", "Green", "Blue"}, {"WA", "NT", "SA", "Q", "NSW", "V", "T"})
 australia:addConstraintByNames({"WA", "NT", "SA"}, TableSalt.allDiff)
 australia:addConstraintByNames({"Q", "NT", "SA"}, TableSalt.allDiff)
@@ -29,7 +29,7 @@ and since the Australia Coloring Problem doesn't benefit from domain reduction o
 
 after which you can print the results -- `australia:print()` -- and get the following:
 
-```
+>```
 WA  Green
 NT  Blue
 SA  Red
@@ -39,12 +39,9 @@ V   Green
 T   Red
 ```
 
-and it's all nice and colored correctly! TableSalt can also accept input in many other ways, be sure to check out the documentaion [[MAKE THIS A LINK]] and some example projects to get a feel for what it can do.
+and it's all nice and colored correctly! TableSalt can also accept input in many other ways, be sure to check out the [documentaion] (soon) and some example projects to get a feel for what it can do.
 
 ## Examples of TableSalt in Use
 Here a few projects I made to test out the functionality of TableSalt:
 
 - SudokuSolver
-- KakuroSolver
-- KenKenSolver
-- TextbookCSPs
