@@ -282,6 +282,12 @@ function TableSalt:addConstraintByNames(section, checkFunction, ...)
     self:addConstraintByIDs(newSectionList, checkFunction, ...)
 end
 
+--- adds a constraint for each row. This is handy for grid based problems
+-- @param checkFunction a function which reduces domains based on a constraint
+-- @param ... any additional arguments checkFunction requires
+-- @usage
+-- local sudoku = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9, 9)
+-- sudoku:addConstraintForEachRow(TableSalt.allDiff)
 function TableSalt:addConstraintForEachRow(checkFunction, ...)
     for i = 1, self.sizeY do
         local row = {}
@@ -292,6 +298,12 @@ function TableSalt:addConstraintForEachRow(checkFunction, ...)
     end
 end
 
+--- adds a constraint for each column. This is handy for grid based problems
+-- @param checkFunction a function which reduces domains based on a constraint
+-- @param ... any additional arguments checkFunction requires
+-- @usage
+-- local sudoku = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9, 9)
+-- sudoku:addConstraintForEachColumn(TableSalt.allDiff)
 function TableSalt:addConstraintForEachColumn(checkFunction, ...)
     for i = 1, self.sizeY do
         local col = {}
@@ -302,7 +314,13 @@ function TableSalt:addConstraintForEachColumn(checkFunction, ...)
     end
 end
 
-function TableSalt:addConstraintForEntireTable(checkFunction, ...)
+--- adds a constraint for all values
+-- @param checkFunction a function which reduces domains based on a constraint
+-- @param ... any additional arguments checkFunction requires
+-- @usage
+-- local linear = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9)
+-- linear:addConstraintForAll(TableSalt.allDiff)
+function TableSalt:addConstraintForAll(checkFunction, ...)
     local fullSection = {}
     for i = 1, self.size do
         fullSection[ #fullSection+1 ] = i
@@ -310,6 +328,12 @@ function TableSalt:addConstraintForEntireTable(checkFunction, ...)
     self:addConstraintByIDs(fullSection, checkFunction, ...)
 end
 
+--- determines if each cell has a value
+-- @return `true` if each cell has a value, `false` otherwise
+-- @usage
+-- local aussie = TableSalt:new({"Red", "Green", "Blue"}, {"WA", "NT", "SA", "Q", "NSW", "V", "T"})
+-- aussie:isFilled() -- should return false
+--
 function TableSalt:isFilled()
     for i, v in ipairs(self.cells) do
         if v.value == nil then
@@ -319,6 +343,15 @@ function TableSalt:isFilled()
     return true
 end
 
+--- determines if the problem is solved based on the constraints that were added
+-- @return `true` if all constraints are satisfied (domain has been reduced to 1 value). `false` otherwise
+-- @usage
+-- local aussie = TableSalt:new({"Red", "Green", "Blue"}, {"WA", "NT", "SA", "Q", "NSW", "V", "T"})
+-- --all the australia color constraints go here
+-- aussie:isSolved() --should return false
+-- aussie:solveForwardCheck()
+-- -- isSolved should now return true as the values have been set.
+-- aussie:isSolved()
 function TableSalt:isSolved()
     -- it should be filled
     if not self:isFilled() then return false end
@@ -408,7 +441,6 @@ function TableSalt:solveConstraints(addVarsAfterAnyChange, specificConstraints)
         end
     end
 
-    -- this is a little ballsy. It should really be self:isSolved(), but this is done for SPEED
     return self:isSolved()
 end
 
