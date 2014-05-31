@@ -25,6 +25,7 @@ australia:addConstraintByNames({"Q", "NT", "SA"}, TableSalt.allDiff)
 australia:addConstraintByNames({"Q", "NSW", "SA"}, TableSalt.allDiff)
 australia:addConstraintByNames({"V", "NSW", "SA"}, TableSalt.allDiff)
 ```
+
 and since the Australia Coloring Problem doesn't benefit from domain reduction off the bat, and then you solve it via forward checking: `australia:solveForwardCheck()`
 
 after which you can print the results -- `australia:print()` -- and get the following:
@@ -39,9 +40,9 @@ V   Green
 T   Red
 ```
 
-and it's all nice and colored correctly! TableSalt can also accept input in many other ways, be sure to check out the [documentaion] (soon) and some example projects to get a feel for what it can do.
+and it's all nice and colored correctly! TableSalt can also accept input in many other ways, be sure to check out the [documentaion](soon) and some example projects to get a feel for what it can do.
 
 ## Examples of TableSalt in Use
 Here a few projects I made to test out the functionality of TableSalt:
 
-- SudokuSolver
+- [SudokuSolver](http://github.com/FourierTransformer/SudokuSolver)
