@@ -7,7 +7,7 @@ To have the latest version of TableSalt, it an be installed as a submodule:
 
     git submodule add git://github.com/FourierTransformer/TableSalt.git
 
-after which you need to do a `git submodule update --recursive` to fully initialize it.
+after which you need to do a `git submodule update --init --recursive` to fully initialize it.
 
 or you could just clone it and include it in your project:
 

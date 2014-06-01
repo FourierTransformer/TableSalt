@@ -1,6 +1,12 @@
 #!/usr/bin/env lua
 ---------------
--- ## TableSalt, Lua module for constraint satisfaction problems
+-- ## TableSalt, Lua framework for constraint satisfaction problems
+--
+-- It goes well with a wide variety of constraint satisfaction problems. Even ones you cook up yourself!
+--
+-- [Github Page](http://github.com/FourierTransformer/TableSalt)
+--
+--
 -- @author Shakil Thakur
 -- @copyright 2014
 -- @license MIT
@@ -125,6 +131,28 @@ function TableSalt:initialize(domain, sizeX, sizeY)
         self.cells[i] = cell:new(i, newDomain)
     end
     self.constraints = {}
+    self.addVarsAfterAnyChange = true
+end
+
+--- switch to toggle when additional constraints should be added for solveConstraints.
+-- When this is true, it will act like the classic [AC3 algorithm](http://en.wikipedia.org/wiki/AC-3_algorithm)
+-- and add constraints after any domain has changed. When it's false, it will only add contraints after a value has
+-- been set (aka, the domain has been reduced to 1). If the problem is easily solved by constraints, setting this to 
+-- true will incur a huge speedup (as in the case for sudoku).
+-- @param bool default is `true`
+-- @usage
+-- local sudoku = TableSalt:new({1,2,3,4,5,6,7,8,9}, 9, 9)
+-- sudoku:setAddVarsAfterAnyChange(false)
+--
+function TableSalt:setAddVarsAfterAnyChange(bool)
+    self.addVarsAfterAnyChange = bool
+end
+
+--- returns where it's adding constraints.
+-- @return `true` if after any domain change. `false` if only when a variable is assigned
+--
+function TableSalt:getAddVarsAfterAnyChange()
+    return self.addVarsAfterAnyChange
 end
 
 --- Returns the id given a variable name
@@ -328,7 +356,7 @@ function TableSalt:addConstraintForAll(checkFunction, ...)
     self:addConstraintByIDs(fullSection, checkFunction, ...)
 end
 
---- determines if each cell has a value
+--- determines if each variable has a value
 -- @return `true` if each cell has a value, `false` otherwise
 -- @usage
 -- local aussie = TableSalt:new({"Red", "Green", "Blue"}, {"WA", "NT", "SA", "Q", "NSW", "V", "T"})
@@ -371,12 +399,11 @@ function TableSalt:isSolved()
     
 end
 
-function TableSalt:solveConstraints(addVarsAfterAnyChange, specificConstraints)
+function TableSalt:solveConstraints(specificConstraints)
     -- sanity checks
     if self:isSolved() then return true end
 
     -- init some vars
-    local addVarsAfterAnyChange = addVarsAfterAnyChange or false
     local frontier = heap:new()
 
     -- if specific constraints were passed in, use those. Otherwise use EVERYTHING.
@@ -390,6 +417,8 @@ function TableSalt:solveConstraints(addVarsAfterAnyChange, specificConstraints)
             frontier:push(v, v.numCells)
         end
     end
+
+    local lastVal = frontier:size()
 
     while not frontier:isEmpty() do
         local currentConstraint = frontier:pop()
@@ -416,8 +445,10 @@ function TableSalt:solveConstraints(addVarsAfterAnyChange, specificConstraints)
                     currentCell.value = v[1]
 
                     -- add affected constraints back to queue
-                    for q, r in ipairs(currentCell.constraints) do
-                        frontier:push(self.constraints[r])
+                    if not self.addVarsAfterAnyChange then
+                        for q, r in ipairs(currentCell.constraints) do
+                            frontier:push(self.constraints[r])
+                        end
                     end
 
                 elseif currentSize <= 0 then
@@ -425,7 +456,7 @@ function TableSalt:solveConstraints(addVarsAfterAnyChange, specificConstraints)
                 end
 
                 -- add any constraints associated with a changed domain
-                if addVarsAfterAnyChange and oldSize ~= currentSize then
+                if self.addVarsAfterAnyChange and oldSize ~= currentSize then
                     for i, v in ipairs(currentConstraint.section) do
                         local cellIndex = currentConstraint.section[i]
                         for q, r in ipairs(self.cells[cellIndex].constraints) do
@@ -444,7 +475,17 @@ function TableSalt:solveConstraints(addVarsAfterAnyChange, specificConstraints)
     return self:isSolved()
 end
 
-function TableSalt:getSmallestDomainID(degreeCheck)
+--- returns the id associated with the variable with the smallest domain.
+-- If there's a tie, it uses the degree heuristic which picks the variable with the larger number of constraints
+-- @return the id of the variable with the smallest domain
+-- @usage
+-- linear = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9)
+-- --some of linear's constraints are added here
+-- linear:solveConstraints()
+-- --after that, I may want to get ahold of the domain the with smallest id
+-- linear:getSmallestDomainID()
+-- 
+function TableSalt:getSmallestDomainID()
     local smallestDomainSize = math.huge
     local cellIndex = nil
     for i, v in ipairs(self.cells) do
@@ -453,8 +494,8 @@ function TableSalt:getSmallestDomainID(degreeCheck)
             -- return cellIndex
             smallestDomainSize = currentDomainSize
             cellIndex = i
-        elseif degreeCheck and currentDomainSize == smallestDomainSize then
-            -- Degree based back track
+        elseif currentDomainSize == smallestDomainSize then
+            -- Degree heuristic
             if #self.cells[i].constraints > #self.cells[cellIndex].constraints then
                 cellIndex = i
             end
@@ -463,9 +504,9 @@ function TableSalt:getSmallestDomainID(degreeCheck)
     return cellIndex
 end
 
-function TableSalt:solveForwardCheck(degreeCheck, addVarsAfterAnyChange)
+function TableSalt:solveForwardCheck()
     -- find the cell with the smallest domain
-    local tinyIndex = self:getSmallestDomainID(degreeCheck)
+    local tinyIndex = self:getSmallestDomainID()
 
     -- IT EXISTS! Therefore, we can do magic.
     if tinyIndex ~= nil then
@@ -477,7 +518,7 @@ function TableSalt:solveForwardCheck(degreeCheck, addVarsAfterAnyChange)
             -- set the value, then try solving the constraints
             self.cells[tinyIndex].value = v
             self.cells[tinyIndex].domain = {v}
-            local wasSucessful = self:solveConstraints(addVarsAfterAnyChange, self.cells[tinyIndex].constraints)
+            local wasSucessful = self:solveConstraints(self.cells[tinyIndex].constraints)
 
             -- stupid tail recursion...
             if wasSucessful then
@@ -494,12 +535,20 @@ function TableSalt:solveForwardCheck(degreeCheck, addVarsAfterAnyChange)
     end
 end
 
-function TableSalt:solve(degreeCheck, addVarsAfterAnyChange)
-    local addVarsAfterAnyChange = addVarsAfterAnyChange or false
-    local degreeCheck = degreeCheck or false
-    local passed = self:solveConstraints(addVarsAfterAnyChange)
+--- solve the constraint satisfaction problem.
+-- This will call `solveConstraints` to reduce the domains and then `solveForwardCheck` to finish solving the problem
+-- @return `true` if the problem was able to be solved. `false` if not.
+-- @usage
+-- local sudoku = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9, 9)
+-- sudoku:setAddVarsAfterAnyChange(false)
+-- sudoku:addConstraintForEachColumn(TableSalt.allDiff)
+-- --all the other sudoku constraints go here
+-- sudoku:solve()
+-- sudoku:print() -- print out the problem.
+function TableSalt:solve()
+    local passed = self:solveConstraints()
     if not passed then
-        passed = self:solveForwardCheck(degreeCheck, addVarsAfterAnyChange)
+        passed = self:solveForwardCheck()
     end
     return passed
 end
@@ -558,6 +607,17 @@ function TableSalt.setVal(section, board, val)
     return allValues
 end
 
+--- prints out the problem either as a table, a row, or a grid. How it prints out is dependent on how the inputs were given.
+-- If the variables were given as a table, it will print out as a table. Otherwise it will print out as a grid. 
+-- @usage
+-- local sudoku = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9, 9)
+-- --add all the sudoku constraints here
+--
+-- -- will show a 9x9 grid of ?s
+-- sudoku:print()
+-- sudoku:solve()
+-- --will show the solved sudoku puzzle now that it's solved
+-- sudoku:print()
 function TableSalt:print()
     if self.usingTable then
         -- I could do this, but it messes with the order of the user input. Gotta have happy users!
