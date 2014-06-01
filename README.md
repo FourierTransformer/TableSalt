@@ -2,7 +2,7 @@ TableSalt
 =========
 TableSalt is a constraint satisfaction framework. It allows you to write custom constraint functions (Pepper Constraints) that can be used to solve practically any constraint satisfaction problem.
 
-Keep reading and check out the [documentation](http://FourierTransofmer.github.io/TableSalt) for more info.
+Keep reading and check out the [documentation](http://FourierTransformer.github.io/TableSalt) for more info.
 
 ## Installation
 To have the latest version of TableSalt, it an be installed as a submodule:
