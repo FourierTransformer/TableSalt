@@ -31,6 +31,7 @@
 <ul>
 <li><a href="#A_Quick_Overview">A Quick Overview </a></li>
 <li><a href="#Writing_Pepper_Constraints">Writing Pepper Constraints </a></li>
+<li><a href="#Passing_in_Pepper_Constraints">Passing in Pepper Constraints </a></li>
 </ul>
 
 
@@ -51,10 +52,95 @@
 <h1>Pepper Constraints</h1>
 <p><a name="A_Quick_Overview"></a></p>
 <h2>A Quick Overview</h2>
+<p>Pepper constraints are functions that reduce domains for constraint satisfaction problems, such as the provided <a href="../index.html#Pepper.allDiff">Pepper.allDiff</a>  (for the all different constraint) and <a href="../index.html#Pepper.setVal">Pepper.setVal</a>  (for any unary constraint). TableSalt allows you to write your own constraint functions, to allow flexibility in the problems you want to solve. Each pepper constraint is then passed in to the framework along with the variables it modifies before solving.</p>
+
 <p><a name="Writing_Pepper_Constraints"></a></p>
 <h2>Writing Pepper Constraints</h2>
-<h3>Things to keep in mind while writing Pepper Constraints</h3>
+<p>Declaring a new pepper constraint is easy:</p>
 
+
+<pre>
+<span class="keyword">function</span> newConstraint(section, board, ...)
+</pre>
+
+
+<p>The TableSalt framework will always pass in the <code>section</code> and <code>board</code> for each constraint function. So be sure that these are the first two arguments declared when creating a new constraint function! The <code>section</code> is a table of id's corresponding to variables that that constraint will be modifying and the <code>board</code> is the current TableSalt instance that is being used. Pepper constraint functions also allow for multiple additional parameters to be passed in, hence the <code>...</code> in the function decleration. Constraints should be designed to work in a variety of situations, they are applied to certain variables (called a <code>section</code>) when they are passed in to the framework.</p>
+
+<p>The main thing about pepper constraints are that they should return a table of tables of the new domains that correspond to the <code>section</code> ids passed in to the constraint. While that sounds confusing let's break it down. Take the <a href="../index.html#Pepper.setVal">Pepper.setVal</a>  constraint for example:</p>
+
+
+<pre>
+<span class="keyword">function</span> Pepper.setVal(section, board, val)
+    <span class="keyword">local</span> allValues = {}
+    <span class="keyword">for</span> i = <span class="number">1</span>, #section <span class="keyword">do</span>
+        allValues [ #allValues+<span class="number">1</span> ] = {val}
+    <span class="keyword">end</span>
+    <span class="keyword">return</span> allValues
+<span class="keyword">end</span>
+</pre>
+
+
+<p>It's important that the table that is returned, <code>allValues</code>, is the same length as <code>section</code>. The first element in <code>allValues</code> corresponds to the new domain (which is always given as a table) of the first element (which will be an id for a constraint) in <code>section</code>. Since this is the <a href="../index.html#Pepper.setVal">setVal</a>  constraint, each domain is reduced to exactly one value.</p>
+
+<p>It's also worth noting that if a constraint fails on a specific id, the associated domain should be an empty table: <code>{}</code>. Ex: The section <code>{1, 3, 4}</code> fails the constraint on the third element, the table the constraint returns could look like this: <code>{ {1, 4, 3}, {2}, {} }</code>.</p>
+
+<h3>Helpful functions when writing constraints</h3>
+<p>Since the pepper constraints pass in an instance of <a href="../index.html#">TableSalt</a> , some of the functions available should be quite useful. Most particularly <code>TableSalt:getValueByID()</code> and <code>TableSalt:getDomainByID()</code>. Here's a quick example of how they could be used:</p>
+
+
+<pre>
+<span class="keyword">function</span> newConstraint(section, board)
+    <span class="keyword">for</span> ind, id <span class="keyword">in</span> <span class="global">ipairs</span>(section) <span class="keyword">do</span>
+        <span class="keyword">local</span> currentValue = board:getValueByID(id)
+        <span class="keyword">local</span> currentDomain = board:getDomainByID(id)
+        <span class="comment">-- some more stuff
+</span>    <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+
+
+<p>This will iterate through all the variables's ids that were passed in and do magical things with their associated values and domains!</p>
+
+<p><a name="Passing_in_Pepper_Constraints"></a></p>
+<h2>Passing in Pepper Constraints</h2>
+<p>There are a multitude of functions that are used to pass in pepper constraints:</p>
+
+<ul>
+    <li><a href="../index.html#TableSalt:addConstraintByIDs">TableSalt:addConstraintByIDs</a> </li>
+    <li><a href="../index.html#TableSalt:addConstraintByPairs">TableSalt:addConstraintByPairs</a> </li>
+    <li><a href="../index.html#TableSalt:addConstraintByNames">TableSalt:addConstraintByNames</a> </li>
+    <li><a href="../index.html#TableSalt:addConstraintForEachRow">TableSalt:addConstraintForEachRow</a> </li>
+    <li><a href="../index.html#TableSalt:addConstraintForEachColumn">TableSalt:addConstraintForEachColumn</a> </li>
+    <li><a href="../index.html#TableSalt:addConstraintForAll">TableSalt:addConstraintForAll</a> </li>
+</ul>
+
+<p>The first three (<a href="../index.html#TableSalt:addConstraintByIDs">addConstraintByIDs</a> , <a href="../index.html#TableSalt:addConstraintByPairs">addConstraintByPairs</a> , and <a href="../index.html#TableSalt:addConstraintByNames">addConstraintByNames</a> ) in the list all follow a similar structure for passing in pepper constraints:</p>
+
+
+<pre>
+    <span class="comment">--code
+</span>    addConstraintByX(section, pepperConstraint, ...)
+    <span class="comment">--more code
+</span>
+</pre>
+
+
+<p>The <code>section</code> can be passed in through a variety of methods, check the documentation on those specific functions for more information on that. The <code>pepperConstraint</code> is simply the name of the <code>pepperConstraint</code> (be sure not to pass in any arguments here). The <code>...</code> represents any additional arguments that are required to run the constraint.</p>
+
+<p>The other three (<a href="../index.html#TableSalt:addConstraintForEachRow">addConstraintForEachRow</a> , <a href="../index.html#TableSalt:addConstraintForEachColumn">addConstraintForEachColumn</a> , and <a href="../index.html#TableSalt:addConstraintForAll">addConstraintForAll</a> ) only pass in the <code>pepperConstraint</code> and any additional arguments. </p>
+
+<p>Here's a quick example on how to pass in <code>Pepper.setVal(section, board, val)</code> which takes in the additional parameter 'val':</p>
+
+
+<pre>
+    <span class="comment">-- some crazy game that is played on 5 squares where each square have the values 1-5
+</span>    <span class="keyword">local</span> crazyGame = TableSalt:new({<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>}, <span class="number">5</span>)
+    <span class="comment">-- squares 1, 3, and 5 all need to be set to 5 for some reason
+</span>    crazyGame:addConstraintByIDs({<span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>}, Pepper.setVal, <span class="number">5</span>)
+</pre>
+
+
+<p>Any additional parameters can just be appended and TableSalt should take care of the rest!</p>
 
 
 </div> <!-- id="content" -->

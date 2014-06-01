@@ -117,28 +117,28 @@ local Pepper = CSP.Pepper
 	<td class="summary">Returns the domain given a pair.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#TableSalt:addConstraintByIDs">TableSalt:addConstraintByIDs (section, checkFunction, ...)</a></td>
-	<td class="summary">add a constraint to the board via IDs</td>
+	<td class="name" nowrap><a href="#TableSalt:addConstraintByIDs">TableSalt:addConstraintByIDs (section, pepperConstraint, ...)</a></td>
+	<td class="summary">add a constraint to the board via IDs.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#TableSalt:addConstraintByPairs">TableSalt:addConstraintByPairs (section, checkFunction, ...)</a></td>
-	<td class="summary">add a constraint to the board via x,y position</td>
+	<td class="name" nowrap><a href="#TableSalt:addConstraintByPairs">TableSalt:addConstraintByPairs (section, pepperConstraint, ...)</a></td>
+	<td class="summary">add a constraint to the board via x,y position.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#TableSalt:addConstraintByNames">TableSalt:addConstraintByNames (section, checkFunction, ...)</a></td>
-	<td class="summary">add a constraint based on the name given in the input table</td>
+	<td class="name" nowrap><a href="#TableSalt:addConstraintByNames">TableSalt:addConstraintByNames (section, pepperConstraint, ...)</a></td>
+	<td class="summary">add a constraint based on the name given in the input table.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#TableSalt:addConstraintForEachRow">TableSalt:addConstraintForEachRow (checkFunction, ...)</a></td>
+	<td class="name" nowrap><a href="#TableSalt:addConstraintForEachRow">TableSalt:addConstraintForEachRow (pepperConstraint, ...)</a></td>
 	<td class="summary">adds a constraint for each row.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#TableSalt:addConstraintForEachColumn">TableSalt:addConstraintForEachColumn (checkFunction, ...)</a></td>
+	<td class="name" nowrap><a href="#TableSalt:addConstraintForEachColumn">TableSalt:addConstraintForEachColumn (pepperConstraint, ...)</a></td>
 	<td class="summary">adds a constraint for each column.</td>
 	</tr>
 	<tr>
-	<td class="name" nowrap><a href="#TableSalt:addConstraintForAll">TableSalt:addConstraintForAll (checkFunction, ...)</a></td>
-	<td class="summary">adds a constraint for all values</td>
+	<td class="name" nowrap><a href="#TableSalt:addConstraintForAll">TableSalt:addConstraintForAll (pepperConstraint, ...)</a></td>
+	<td class="summary">adds a constraint for all values.</td>
 	</tr>
 	<tr>
 	<td class="name" nowrap><a href="#TableSalt:isFilled">TableSalt:isFilled ()</a></td>
@@ -570,10 +570,10 @@ local Pepper = CSP.Pepper
 </dd>
     <dt>
     <a name = "TableSalt:addConstraintByIDs"></a>
-    <strong>TableSalt:addConstraintByIDs (section, checkFunction, ...)</strong>
+    <strong>TableSalt:addConstraintByIDs (section, pepperConstraint, ...)</strong>
     </dt>
     <dd>
-    add a constraint to the board via IDs
+    add a constraint to the board via IDs.  For more information, check out <a href="manual/PepperConstraints.md.html#">PepperConstraints.md</a>
 
 
     <h3>Parameters:</h3>
@@ -581,11 +581,11 @@ local Pepper = CSP.Pepper
         <li><span class="parameter">section</span>
          a table of id's
         </li>
-        <li><span class="parameter">checkFunction</span>
+        <li><span class="parameter">pepperConstraint</span>
          a function which reduces domains based on a constraint
         </li>
         <li><span class="parameter">...</span>
-         any additional arguments checkFunction requires
+         any additional arguments pepperConstraint requires
         </li>
     </ul>
 
@@ -603,10 +603,10 @@ local Pepper = CSP.Pepper
 </dd>
     <dt>
     <a name = "TableSalt:addConstraintByPairs"></a>
-    <strong>TableSalt:addConstraintByPairs (section, checkFunction, ...)</strong>
+    <strong>TableSalt:addConstraintByPairs (section, pepperConstraint, ...)</strong>
     </dt>
     <dd>
-    add a constraint to the board via x,y position
+    add a constraint to the board via x,y position.  For more information, check out <a href="manual/PepperConstraints.md.html#">PepperConstraints.md</a>
 
 
     <h3>Parameters:</h3>
@@ -614,11 +614,11 @@ local Pepper = CSP.Pepper
         <li><span class="parameter">section</span>
          a table of x,y pairs
         </li>
-        <li><span class="parameter">checkFunction</span>
+        <li><span class="parameter">pepperConstraint</span>
          a function which reduces domains based on a constraint
         </li>
         <li><span class="parameter">...</span>
-         any additional arguments checkFunction requires
+         any additional arguments pepperConstraint requires
         </li>
     </ul>
 
@@ -636,10 +636,10 @@ local Pepper = CSP.Pepper
 </dd>
     <dt>
     <a name = "TableSalt:addConstraintByNames"></a>
-    <strong>TableSalt:addConstraintByNames (section, checkFunction, ...)</strong>
+    <strong>TableSalt:addConstraintByNames (section, pepperConstraint, ...)</strong>
     </dt>
     <dd>
-    add a constraint based on the name given in the input table
+    add a constraint based on the name given in the input table.  For more information, check out <a href="manual/PepperConstraints.md.html#">PepperConstraints.md</a>
 
 
     <h3>Parameters:</h3>
@@ -647,11 +647,11 @@ local Pepper = CSP.Pepper
         <li><span class="parameter">section</span>
          a table of names
         </li>
-        <li><span class="parameter">checkFunction</span>
+        <li><span class="parameter">pepperConstraint</span>
          a function which reduces domains based on a constraint
         </li>
         <li><span class="parameter">...</span>
-         any additional arguments checkFunction requires
+         any additional arguments pepperConstraint requires
         </li>
     </ul>
 
@@ -668,19 +668,19 @@ local Pepper = CSP.Pepper
 </dd>
     <dt>
     <a name = "TableSalt:addConstraintForEachRow"></a>
-    <strong>TableSalt:addConstraintForEachRow (checkFunction, ...)</strong>
+    <strong>TableSalt:addConstraintForEachRow (pepperConstraint, ...)</strong>
     </dt>
     <dd>
-    adds a constraint for each row.  This is handy for grid based problems
+    adds a constraint for each row.  This is handy for grid based problems. For more information, check out <a href="manual/PepperConstraints.md.html#">PepperConstraints.md</a>
 
 
     <h3>Parameters:</h3>
     <ul>
-        <li><span class="parameter">checkFunction</span>
+        <li><span class="parameter">pepperConstraint</span>
          a function which reduces domains based on a constraint
         </li>
         <li><span class="parameter">...</span>
-         any additional arguments checkFunction requires
+         any additional arguments pepperConstraint requires
         </li>
     </ul>
 
@@ -697,19 +697,19 @@ local Pepper = CSP.Pepper
 </dd>
     <dt>
     <a name = "TableSalt:addConstraintForEachColumn"></a>
-    <strong>TableSalt:addConstraintForEachColumn (checkFunction, ...)</strong>
+    <strong>TableSalt:addConstraintForEachColumn (pepperConstraint, ...)</strong>
     </dt>
     <dd>
-    adds a constraint for each column.  This is handy for grid based problems
+    adds a constraint for each column.  This is handy for grid based problems. For more information, check out <a href="manual/PepperConstraints.md.html#">PepperConstraints.md</a>
 
 
     <h3>Parameters:</h3>
     <ul>
-        <li><span class="parameter">checkFunction</span>
+        <li><span class="parameter">pepperConstraint</span>
          a function which reduces domains based on a constraint
         </li>
         <li><span class="parameter">...</span>
-         any additional arguments checkFunction requires
+         any additional arguments pepperConstraint requires
         </li>
     </ul>
 
@@ -726,19 +726,19 @@ local Pepper = CSP.Pepper
 </dd>
     <dt>
     <a name = "TableSalt:addConstraintForAll"></a>
-    <strong>TableSalt:addConstraintForAll (checkFunction, ...)</strong>
+    <strong>TableSalt:addConstraintForAll (pepperConstraint, ...)</strong>
     </dt>
     <dd>
-    adds a constraint for all values
+    adds a constraint for all values.  For more information, check out <a href="manual/PepperConstraints.md.html#">PepperConstraints.md</a>
 
 
     <h3>Parameters:</h3>
     <ul>
-        <li><span class="parameter">checkFunction</span>
+        <li><span class="parameter">pepperConstraint</span>
          a function which reduces domains based on a constraint
         </li>
         <li><span class="parameter">...</span>
-         any additional arguments checkFunction requires
+         any additional arguments pepperConstraint requires
         </li>
     </ul>
 
@@ -959,7 +959,7 @@ local Pepper = CSP.Pepper
     </dt>
     <dd>
     Pepper Constraints are constraints written as functions that reduce the domain on a set of variables.
- For more information, check out the documentaton below on a few pepper constraints and <a href="manual/PepperConstraints.md.html#">PepperConstraints.md</a>
+ For more information, check out <a href="manual/PepperConstraints.md.html#">PepperConstraints.md</a>
 
 
 

@@ -265,100 +265,100 @@ function TableSalt:getDomainByPair(x, y)
     return self:getDomainByID(self:getIDByPair(x, y))
 end
 
---- add a constraint to the board via IDs
+--- add a constraint to the board via IDs. For more information, check out @{PepperConstraints.md}
 -- @param section a table of id's
--- @param checkFunction a function which reduces domains based on a constraint
--- @param ... any additional arguments checkFunction requires
+-- @param pepperConstraint a function which reduces domains based on a constraint
+-- @param ... any additional arguments pepperConstraint requires
 -- @usage
 -- local linear = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9)
 -- --id's 1, 3, and 5 have to be different
 -- linear:addConstraintByIDs({1, 3, 5}, Pepper.allDiff)
 --
-function TableSalt:addConstraintByIDs(section, checkFunction, ...)
+function TableSalt:addConstraintByIDs(section, pepperConstraint, ...)
     local constraintNum = #self.constraints+1
-    self.constraints[ constraintNum ] = constraint:new(section, checkFunction, ...)
+    self.constraints[ constraintNum ] = constraint:new(section, pepperConstraint, ...)
     for i,v in ipairs(section) do
         table.insert(self.cells[v].constraints, constraintNum)
     end
 end
 
---- add a constraint to the board via x,y position
+--- add a constraint to the board via x,y position. For more information, check out @{PepperConstraints.md}
 -- @param section a table of x,y pairs
--- @param checkFunction a function which reduces domains based on a constraint
--- @param ... any additional arguments checkFunction requires
+-- @param pepperConstraint a function which reduces domains based on a constraint
+-- @param ... any additional arguments pepperConstraint requires
 -- @usage
 -- local sudoku = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9, 9)
 -- -- (1, 1), (5, 2), and (7, 2) all have a value of 4
 -- sudoku:addConstraintByPairs({ {1, 1}, {5, 2}, {7, 2} }, Pepper.setVal, 4)
 --
-function TableSalt:addConstraintByPairs(section, checkFunction, ...)
+function TableSalt:addConstraintByPairs(section, pepperConstraint, ...)
     local newSectionList = {}
     for i, v in ipairs(section) do
         newSectionList[i] = self:getIDByPair(v[1], v[2])
     end
-    self:addConstraintByIDs(newSectionList, checkFunction, ...)
+    self:addConstraintByIDs(newSectionList, pepperConstraint, ...)
 end
 
---- add a constraint based on the name given in the input table
+--- add a constraint based on the name given in the input table. For more information, check out @{PepperConstraints.md}
 -- @param section a table of names
--- @param checkFunction a function which reduces domains based on a constraint
--- @param ... any additional arguments checkFunction requires
+-- @param pepperConstraint a function which reduces domains based on a constraint
+-- @param ... any additional arguments pepperConstraint requires
 -- @usage
 -- local aussie = TableSalt:new({"Red", "Green", "Blue"}, {"WA", "NT", "SA", "Q", "NSW", "V", "T"})
 -- aussie:addConstraintByNames({ "WA", "NT", "SA" }, Pepper.allDiff)
 --
-function TableSalt:addConstraintByNames(section, checkFunction, ...)
+function TableSalt:addConstraintByNames(section, pepperConstraint, ...)
     local newSectionList = {}
     for i, v in ipairs(section) do
         newSectionList[i] = self:getIDByName(v)
     end
-    self:addConstraintByIDs(newSectionList, checkFunction, ...)
+    self:addConstraintByIDs(newSectionList, pepperConstraint, ...)
 end
 
---- adds a constraint for each row. This is handy for grid based problems
--- @param checkFunction a function which reduces domains based on a constraint
--- @param ... any additional arguments checkFunction requires
+--- adds a constraint for each row. This is handy for grid based problems. For more information, check out @{PepperConstraints.md}
+-- @param pepperConstraint a function which reduces domains based on a constraint
+-- @param ... any additional arguments pepperConstraint requires
 -- @usage
 -- local sudoku = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9, 9)
 -- sudoku:addConstraintForEachRow(Pepper.allDiff)
-function TableSalt:addConstraintForEachRow(checkFunction, ...)
+function TableSalt:addConstraintForEachRow(pepperConstraint, ...)
     for i = 1, self.sizeY do
         local row = {}
         for j = 1, self.sizeX do
             row[ #row+1 ] = self:getIDByPair(j, i)
         end
-        self:addConstraintByIDs(row, checkFunction, ...)
+        self:addConstraintByIDs(row, pepperConstraint, ...)
     end
 end
 
---- adds a constraint for each column. This is handy for grid based problems
--- @param checkFunction a function which reduces domains based on a constraint
--- @param ... any additional arguments checkFunction requires
+--- adds a constraint for each column. This is handy for grid based problems. For more information, check out @{PepperConstraints.md}
+-- @param pepperConstraint a function which reduces domains based on a constraint
+-- @param ... any additional arguments pepperConstraint requires
 -- @usage
 -- local sudoku = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9, 9)
 -- sudoku:addConstraintForEachColumn(Pepper.allDiff)
-function TableSalt:addConstraintForEachColumn(checkFunction, ...)
+function TableSalt:addConstraintForEachColumn(pepperConstraint, ...)
     for i = 1, self.sizeY do
         local col = {}
         for j = 1, self.sizeX do
             col[ #col+1 ] = self:getIDByPair(i, j)
         end
-        self:addConstraintByIDs(col, checkFunction, ...)
+        self:addConstraintByIDs(col, pepperConstraint, ...)
     end
 end
 
---- adds a constraint for all values
--- @param checkFunction a function which reduces domains based on a constraint
--- @param ... any additional arguments checkFunction requires
+--- adds a constraint for all values. For more information, check out @{PepperConstraints.md}
+-- @param pepperConstraint a function which reduces domains based on a constraint
+-- @param ... any additional arguments pepperConstraint requires
 -- @usage
 -- local linear = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9)
 -- linear:addConstraintForAll(Pepper.allDiff)
-function TableSalt:addConstraintForAll(checkFunction, ...)
+function TableSalt:addConstraintForAll(pepperConstraint, ...)
     local fullSection = {}
     for i = 1, self.size do
         fullSection[ #fullSection+1 ] = i
     end
-    self:addConstraintByIDs(fullSection, checkFunction, ...)
+    self:addConstraintByIDs(fullSection, pepperConstraint, ...)
 end
 
 --- determines if each variable has a value
@@ -614,7 +614,7 @@ end
 -- @section public
 
 --- Pepper Constraints are constraints written as functions that reduce the domain on a set of variables.
--- For more information, check out the documentaton below on a few pepper constraints and @{PepperConstraints.md}
+-- For more information, check out @{PepperConstraints.md}
 -- @table Pepper
 local Pepper = {}
 
