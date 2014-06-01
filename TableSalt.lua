@@ -6,11 +6,16 @@
 --
 -- [Github Page](http://github.com/FourierTransformer/TableSalt)
 --
---
 -- @author Shakil Thakur
 -- @copyright 2014
 -- @license MIT
--- @script TableSalt
+
+--- @usage
+local usage = [[
+local CSP = require('TableSalt/TableSalt')
+local TableSalt = CSP.TableSalt
+local Pepper = CSP.Pepper
+]]
 
 -- ================
 -- requires and such
@@ -399,6 +404,9 @@ function TableSalt:isSolved()
     
 end
 
+--- runs the [AC3 algorithm](http://en.wikipedia.org/wiki/AC-3_algorithm) to reduce domains/solve the problem
+-- @param specificCellID (optional) useful for running constrains only associated with one cell. If omitted, solveConstraints will use all constraints
+-- @return `true` if the problem was solved. `false` otherwise
 function TableSalt:solveConstraints(specificCellID)
     -- sanity checks
     if self:isSolved() then return true end
@@ -504,6 +512,17 @@ function TableSalt:getSmallestDomainID()
     return cellIndex
 end
 
+
+--- runs the forward check algorithm in the current state.
+-- It goes through each variable, tries a value from the domain, runs `solveConstraints` to prune,
+-- backtracks if necessary, and finally determines a solution. 
+-- @return `true` if the problem is solved. `false` otherwise 
+-- @usage
+-- local aussie = TableSalt:new({"Red", "Green", "Blue"}, {"WA", "NT", "SA", "Q", "NSW", "V", "T"})
+-- -- the various australia color problem constraints would go here
+-- -- the Australia color problem doesn't benefit from calling solveConstraints as no domains are reduced.
+-- aussie:solveForwardCheck()
+--
 function TableSalt:solveForwardCheck()
     -- find the cell with the smallest domain
     local tinyIndex = self:getSmallestDomainID()
@@ -595,7 +614,7 @@ end
 -- @section public
 
 --- Pepper Constraints are constraints written as functions that reduce the domain on a set of variables.
--- For more information, check out the documentaton below on a few pepper constraints and [Writing Pepper Constraints](url)
+-- For more information, check out the documentaton below on a few pepper constraints and @{PepperConstraints.md}
 -- @table Pepper
 local Pepper = {}
 
