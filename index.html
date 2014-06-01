@@ -1,0 +1,1094 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>TableSalt documentation</title>
+    <link rel="stylesheet" href="ldoc_pale.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>TableSalt</h1>
+
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Class_TableSalt">Class TableSalt </a></li>
+<li><a href="#Pepper_Constraints">Pepper Constraints </a></li>
+<li><a href="#CSP_module">CSP module </a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><strong>TableSalt</strong></li>
+</ul>
+<h2>Manual</h2>
+<ul class="$(kind=='Topics' and '' or 'nowrap'">
+  <li><a href="manual/PepperConstraints.md.html">PepperConstraints</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>TableSalt</code></h1>
+<p>
+<h2>TableSalt, Lua framework for constraint satisfaction problems</h2>
+</p>
+<p> It goes well with a wide variety of constraint satisfaction problems -- Even ones you cook up yourself!</p>
+
+<p> <a href="http://github.com/FourierTransformer/TableSalt">Github Page</a></p>
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">local CSP = require(&apos;TableSalt/TableSalt&apos;)
+local TableSalt = CSP.TableSalt
+local Pepper = CSP.Pepper
+</pre>
+    </ul>
+    <h3>Info:</h3>
+    <ul>
+        <li><strong>Copyright</strong>: 2014</li>
+        <li><strong>License</strong>: MIT</li>
+        <li><strong>Author</strong>: Shakil Thakur</li>
+    </ul>
+
+
+<h2><a href="#Class_TableSalt">Class TableSalt </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:new">TableSalt:new (domain, sizeX, sizeY)</a></td>
+	<td class="summary">Creates a new <a href="index.html#">TableSalt</a>  instance.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:setAddVarsAfterAnyChange">TableSalt:setAddVarsAfterAnyChange (bool)</a></td>
+	<td class="summary">switch to toggle when additional constraints should be added for solveConstraints.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:getAddVarsAfterAnyChange">TableSalt:getAddVarsAfterAnyChange ()</a></td>
+	<td class="summary">returns where it's adding constraints.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:getIDByName">TableSalt:getIDByName (n)</a></td>
+	<td class="summary">Returns the id given a variable name</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:getIDByPair">TableSalt:getIDByPair (x, y)</a></td>
+	<td class="summary">Returns the id given a pair.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:getValueByID">TableSalt:getValueByID (i)</a></td>
+	<td class="summary">Returns the value given the id</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:getValueByName">TableSalt:getValueByName (n)</a></td>
+	<td class="summary">Returns the value given a name</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:getValueByPair">TableSalt:getValueByPair (x, y)</a></td>
+	<td class="summary">Returns the value given a pair.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:getDomainByID">TableSalt:getDomainByID (i)</a></td>
+	<td class="summary">Returns the domain given the id.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:getDomainByName">TableSalt:getDomainByName (n)</a></td>
+	<td class="summary">Returns the domain given a name</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:getDomainByPair">TableSalt:getDomainByPair (x, y)</a></td>
+	<td class="summary">Returns the domain given a pair.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:addConstraintByIDs">TableSalt:addConstraintByIDs (section, checkFunction, ...)</a></td>
+	<td class="summary">add a constraint to the board via IDs</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:addConstraintByPairs">TableSalt:addConstraintByPairs (section, checkFunction, ...)</a></td>
+	<td class="summary">add a constraint to the board via x,y position</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:addConstraintByNames">TableSalt:addConstraintByNames (section, checkFunction, ...)</a></td>
+	<td class="summary">add a constraint based on the name given in the input table</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:addConstraintForEachRow">TableSalt:addConstraintForEachRow (checkFunction, ...)</a></td>
+	<td class="summary">adds a constraint for each row.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:addConstraintForEachColumn">TableSalt:addConstraintForEachColumn (checkFunction, ...)</a></td>
+	<td class="summary">adds a constraint for each column.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:addConstraintForAll">TableSalt:addConstraintForAll (checkFunction, ...)</a></td>
+	<td class="summary">adds a constraint for all values</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:isFilled">TableSalt:isFilled ()</a></td>
+	<td class="summary">determines if each variable has a value</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:isSolved">TableSalt:isSolved ()</a></td>
+	<td class="summary">determines if the problem is solved based on the constraints that were added</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:solveConstraints">TableSalt:solveConstraints (specificCellID)</a></td>
+	<td class="summary">runs the <a href="http://en.wikipedia.org/wiki/AC-3_algorithm">AC3 algorithm</a> to reduce domains/solve the problem</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:getSmallestDomainID">TableSalt:getSmallestDomainID ()</a></td>
+	<td class="summary">returns the id associated with the variable with the smallest domain.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:solveForwardCheck">TableSalt:solveForwardCheck ()</a></td>
+	<td class="summary">runs the forward check algorithm in the current state.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:solve">TableSalt:solve ()</a></td>
+	<td class="summary">solve the constraint satisfaction problem.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#TableSalt:print">TableSalt:print ()</a></td>
+	<td class="summary">prints out the problem either as a table, a row, or a grid.</td>
+	</tr>
+</table>
+<h2><a href="#Pepper_Constraints">Pepper Constraints </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#Pepper">Pepper</a></td>
+	<td class="summary">Pepper Constraints are constraints written as functions that reduce the domain on a set of variables.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Pepper.allDiff">Pepper.allDiff (section, board)</a></td>
+	<td class="summary">ensures all numbers in a section are of a different value</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Pepper.setVal">Pepper.setVal (section, board, val)</a></td>
+	<td class="summary">sets the value of the cell[s].</td>
+	</tr>
+</table>
+<h2><a href="#CSP_module">CSP module </a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#CSP">CSP</a></td>
+	<td class="summary">CSP module that is passed back by the script.</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2><a name="Class_TableSalt"></a>Class TableSalt </h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "TableSalt:new"></a>
+    <strong>TableSalt:new (domain, sizeX, sizeY)</strong>
+    </dt>
+    <dd>
+    Creates a new <a href="index.html#">TableSalt</a>  instance.  This will initialize a table, where each cell has a unique id which hold
+ a value and a domain that can be accessed through various getters, as described below.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">domain</span>
+         the domain for each of the cells in the problem
+        </li>
+        <li><span class="parameter">sizeX</span>
+         the length of the input or a table representing the variables
+        </li>
+        <li><span class="parameter">sizeY</span>
+         (optional) - the height of the domain space if the CSP exists over a grid
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        a new <a href="index.html#">TableSalt</a>  instance
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> TableSalt = <span class="global">require</span>(<span class="string">'TableSalt/TableSalt'</span>)
+ <span class="keyword">local</span> aussie = TableSalt:new({<span class="string">"Red"</span>, <span class="string">"Green"</span>, <span class="string">"Blue"</span>}, {<span class="string">"WA"</span>, <span class="string">"NT"</span>, <span class="string">"SA"</span>, <span class="string">"Q"</span>, <span class="string">"NSW"</span>, <span class="string">"V"</span>, <span class="string">"T"</span>}) <span class="comment">-- for the australia coloring problem.
+</span> <span class="keyword">local</span> sudoku = TableSalt:new({<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>,<span class="number">8</span>,<span class="number">9</span>}, <span class="number">9</span>, <span class="number">9</span>) <span class="comment">-- for sudoku. Creates a 9x9 grid
+</span> <span class="keyword">local</span> linear = TableSalt:new({<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>,<span class="number">8</span>,<span class="number">9</span>}, <span class="number">9</span>) <span class="comment">-- basically creates a 9x1 grid, for problems that don't really require a grid, but can be enumerated
+</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:setAddVarsAfterAnyChange"></a>
+    <strong>TableSalt:setAddVarsAfterAnyChange (bool)</strong>
+    </dt>
+    <dd>
+    switch to toggle when additional constraints should be added for solveConstraints.
+ When this is true, it will act like the classic <a href="http://en.wikipedia.org/wiki/AC-3_algorithm">AC3 algorithm</a>
+ and add constraints after any domain has changed. When it's false, it will only add contraints after a value has
+ been set (aka, the domain has been reduced to 1). If the problem is easily solved by constraints, setting this to
+ true will incur a huge speedup (as in the case for sudoku).
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">bool</span>
+         default is <code>true</code>
+        </li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> sudoku = TableSalt:new({<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>,<span class="number">8</span>,<span class="number">9</span>}, <span class="number">9</span>, <span class="number">9</span>)
+ sudoku:setAddVarsAfterAnyChange(<span class="keyword">false</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:getAddVarsAfterAnyChange"></a>
+    <strong>TableSalt:getAddVarsAfterAnyChange ()</strong>
+    </dt>
+    <dd>
+    returns where it's adding constraints.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+        <code>true</code> if after any domain change. <code>false</code> if only when a variable is assigned
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "TableSalt:getIDByName"></a>
+    <strong>TableSalt:getIDByName (n)</strong>
+    </dt>
+    <dd>
+    Returns the id given a variable name
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">n</span>
+         the name of a variable used in the problem
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        the id associated with the given name
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> aussie = TableSalt:new({<span class="string">"Red"</span>, <span class="string">"Green"</span>, <span class="string">"Blue"</span>}, {<span class="string">"WA"</span>, <span class="string">"NT"</span>, <span class="string">"SA"</span>, <span class="string">"Q"</span>, <span class="string">"NSW"</span>, <span class="string">"V"</span>, <span class="string">"T"</span>})
+ aussie:getIDByName(<span class="string">"NSW"</span>) <span class="comment">-- will return the ID for NSW
+</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:getIDByPair"></a>
+    <strong>TableSalt:getIDByPair (x, y)</strong>
+    </dt>
+    <dd>
+    Returns the id given a pair.  <code>(0,0)</code> represents the top left
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">x</span>
+         the x position from the left
+        </li>
+        <li><span class="parameter">y</span>
+         the y position from the top
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        the id associated with the pair
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> sudoku = TableSalt:new({<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>,<span class="number">8</span>,<span class="number">9</span>}, <span class="number">9</span>, <span class="number">9</span>)
+ sudoku:getIDByPair(<span class="number">5</span>,<span class="number">5</span>) <span class="comment">-- will return the id of the centermost cell
+</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:getValueByID"></a>
+    <strong>TableSalt:getValueByID (i)</strong>
+    </dt>
+    <dd>
+    Returns the value given the id
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">i</span>
+         the id of the cell
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        the value associated with the given id or <code>nil</code> if it hasn't been set.
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> linear = TableSalt:new({<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>}, <span class="number">8</span>)
+ <span class="comment">-- various problem constraints would go here
+</span> linear:solve()
+ linear:getValueByID(<span class="number">7</span>) <span class="comment">-- will return the value for the 7th item
+</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:getValueByName"></a>
+    <strong>TableSalt:getValueByName (n)</strong>
+    </dt>
+    <dd>
+    Returns the value given a name
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">n</span>
+         the name of the variable
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        the value associated with the given name or <code>nil</code> if it hasn't been set.
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> aussie = TableSalt:new({<span class="string">"Red"</span>, <span class="string">"Green"</span>, <span class="string">"Blue"</span>}, {<span class="string">"WA"</span>, <span class="string">"NT"</span>, <span class="string">"SA"</span>, <span class="string">"Q"</span>, <span class="string">"NSW"</span>, <span class="string">"V"</span>, <span class="string">"T"</span>})
+ <span class="comment">-- the various australia color problem constraints would go here
+</span> aussie:solveForwardCheck()
+ aussie:getValueByName(<span class="string">"WA"</span>) <span class="comment">-- will return the value that was set for "WA" (western australia)
+</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:getValueByPair"></a>
+    <strong>TableSalt:getValueByPair (x, y)</strong>
+    </dt>
+    <dd>
+    Returns the value given a pair.  <code>(0,0)</code> represents the top left
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">x</span>
+         the x position from the left
+        </li>
+        <li><span class="parameter">y</span>
+         the y position from the top
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        the value associated with the pair or <code>nil</code> if it hasn't been set.
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> sudoku = TableSalt:new({<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>,<span class="number">8</span>,<span class="number">9</span>}, <span class="number">9</span>, <span class="number">9</span>)
+ <span class="comment">-- the various sudoku constraints would go here
+</span> sudoku:solve()
+ sudoku:getValueByPair(<span class="number">5</span>,<span class="number">5</span>) <span class="comment">-- will return the value of the centermost cell.
+</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:getDomainByID"></a>
+    <strong>TableSalt:getDomainByID (i)</strong>
+    </dt>
+    <dd>
+    Returns the domain given the id.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">i</span>
+         the id
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        the domain (as a table) associated with the id. <code>{nil}</code> if empty
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> linear = TableSalt:new({<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>}, <span class="number">8</span>)
+ <span class="comment">-- various problem constraints would go here
+</span> linear:solveConstraints()
+ linear:getDomainyID(<span class="number">7</span>) <span class="comment">-- will return the domain for the 7th item. Ex: {4, 6, 8}
+</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:getDomainByName"></a>
+    <strong>TableSalt:getDomainByName (n)</strong>
+    </dt>
+    <dd>
+    Returns the domain given a name
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">n</span>
+         the name of the variable
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        the domain (as a table) associated with the given name. <code>{nil}</code> if empty
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> aussie = TableSalt:new({<span class="string">"Red"</span>, <span class="string">"Green"</span>, <span class="string">"Blue"</span>}, {<span class="string">"WA"</span>, <span class="string">"NT"</span>, <span class="string">"SA"</span>, <span class="string">"Q"</span>, <span class="string">"NSW"</span>, <span class="string">"V"</span>, <span class="string">"T"</span>})
+ <span class="comment">-- the various australia color problem constraints would go here
+</span> aussie:solveForwardCheck()
+ aussie:getDomainByName(<span class="string">"WA"</span>) <span class="comment">-- will return the domain for "WA" Ex: {"Green"}
+</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:getDomainByPair"></a>
+    <strong>TableSalt:getDomainByPair (x, y)</strong>
+    </dt>
+    <dd>
+    Returns the domain given a pair.  <code>(0,0)</code> represents the top left
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">x</span>
+         the x position from the left
+        </li>
+        <li><span class="parameter">y</span>
+         the y position from the top
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        the domain (as a table) associated with the given pair. <code>{nil}</code> if empty
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> sudoku = TableSalt:new({<span class="number">1</span>,<span class="number">2</span>,<span class="number">3</span>,<span class="number">4</span>,<span class="number">5</span>,<span class="number">6</span>,<span class="number">7</span>,<span class="number">8</span>,<span class="number">9</span>}, <span class="number">9</span>, <span class="number">9</span>)
+ <span class="comment">-- the various sudoku constraints would go here
+</span> sudoku:solveConstraints()
+ sudoku:getDomainByPair(<span class="number">5</span>,<span class="number">5</span>) <span class="comment">-- will return the domain of the centermost cell. Ex: {1, 3, 5}
+</span> sudoku:solveForwardCheck()
+ sudoku:getDomainByPair(<span class="number">5</span>,<span class="number">5</span>) <span class="comment">-- should be solved, so only one thing in the domain. Ex: {5}
+</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:addConstraintByIDs"></a>
+    <strong>TableSalt:addConstraintByIDs (section, checkFunction, ...)</strong>
+    </dt>
+    <dd>
+    add a constraint to the board via IDs
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">section</span>
+         a table of id's
+        </li>
+        <li><span class="parameter">checkFunction</span>
+         a function which reduces domains based on a constraint
+        </li>
+        <li><span class="parameter">...</span>
+         any additional arguments checkFunction requires
+        </li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> linear = TableSalt:new({<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>}, <span class="number">9</span>)
+ <span class="comment">--id's 1, 3, and 5 have to be different
+</span> linear:addConstraintByIDs({<span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>}, Pepper.allDiff)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:addConstraintByPairs"></a>
+    <strong>TableSalt:addConstraintByPairs (section, checkFunction, ...)</strong>
+    </dt>
+    <dd>
+    add a constraint to the board via x,y position
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">section</span>
+         a table of x,y pairs
+        </li>
+        <li><span class="parameter">checkFunction</span>
+         a function which reduces domains based on a constraint
+        </li>
+        <li><span class="parameter">...</span>
+         any additional arguments checkFunction requires
+        </li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> sudoku = TableSalt:new({<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>}, <span class="number">9</span>, <span class="number">9</span>)
+ <span class="comment">-- (1, 1), (5, 2), and (7, 2) all have a value of 4
+</span> sudoku:addConstraintByPairs({ {<span class="number">1</span>, <span class="number">1</span>}, {<span class="number">5</span>, <span class="number">2</span>}, {<span class="number">7</span>, <span class="number">2</span>} }, Pepper.setVal, <span class="number">4</span>)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:addConstraintByNames"></a>
+    <strong>TableSalt:addConstraintByNames (section, checkFunction, ...)</strong>
+    </dt>
+    <dd>
+    add a constraint based on the name given in the input table
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">section</span>
+         a table of names
+        </li>
+        <li><span class="parameter">checkFunction</span>
+         a function which reduces domains based on a constraint
+        </li>
+        <li><span class="parameter">...</span>
+         any additional arguments checkFunction requires
+        </li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> aussie = TableSalt:new({<span class="string">"Red"</span>, <span class="string">"Green"</span>, <span class="string">"Blue"</span>}, {<span class="string">"WA"</span>, <span class="string">"NT"</span>, <span class="string">"SA"</span>, <span class="string">"Q"</span>, <span class="string">"NSW"</span>, <span class="string">"V"</span>, <span class="string">"T"</span>})
+ aussie:addConstraintByNames({ <span class="string">"WA"</span>, <span class="string">"NT"</span>, <span class="string">"SA"</span> }, Pepper.allDiff)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:addConstraintForEachRow"></a>
+    <strong>TableSalt:addConstraintForEachRow (checkFunction, ...)</strong>
+    </dt>
+    <dd>
+    adds a constraint for each row.  This is handy for grid based problems
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">checkFunction</span>
+         a function which reduces domains based on a constraint
+        </li>
+        <li><span class="parameter">...</span>
+         any additional arguments checkFunction requires
+        </li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> sudoku = TableSalt:new({<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>}, <span class="number">9</span>, <span class="number">9</span>)
+ sudoku:addConstraintForEachRow(Pepper.allDiff)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:addConstraintForEachColumn"></a>
+    <strong>TableSalt:addConstraintForEachColumn (checkFunction, ...)</strong>
+    </dt>
+    <dd>
+    adds a constraint for each column.  This is handy for grid based problems
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">checkFunction</span>
+         a function which reduces domains based on a constraint
+        </li>
+        <li><span class="parameter">...</span>
+         any additional arguments checkFunction requires
+        </li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> sudoku = TableSalt:new({<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>}, <span class="number">9</span>, <span class="number">9</span>)
+ sudoku:addConstraintForEachColumn(Pepper.allDiff)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:addConstraintForAll"></a>
+    <strong>TableSalt:addConstraintForAll (checkFunction, ...)</strong>
+    </dt>
+    <dd>
+    adds a constraint for all values
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">checkFunction</span>
+         a function which reduces domains based on a constraint
+        </li>
+        <li><span class="parameter">...</span>
+         any additional arguments checkFunction requires
+        </li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> linear = TableSalt:new({<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>}, <span class="number">9</span>)
+ linear:addConstraintForAll(Pepper.allDiff)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:isFilled"></a>
+    <strong>TableSalt:isFilled ()</strong>
+    </dt>
+    <dd>
+    determines if each variable has a value
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+        <code>true</code> if each cell has a value, <code>false</code> otherwise
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> aussie = TableSalt:new({<span class="string">"Red"</span>, <span class="string">"Green"</span>, <span class="string">"Blue"</span>}, {<span class="string">"WA"</span>, <span class="string">"NT"</span>, <span class="string">"SA"</span>, <span class="string">"Q"</span>, <span class="string">"NSW"</span>, <span class="string">"V"</span>, <span class="string">"T"</span>})
+ aussie:isFilled() <span class="comment">-- should return false
+</span></pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:isSolved"></a>
+    <strong>TableSalt:isSolved ()</strong>
+    </dt>
+    <dd>
+    determines if the problem is solved based on the constraints that were added
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+        <code>true</code> if all constraints are satisfied (domain has been reduced to 1 value). <code>false</code> otherwise
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> aussie = TableSalt:new({<span class="string">"Red"</span>, <span class="string">"Green"</span>, <span class="string">"Blue"</span>}, {<span class="string">"WA"</span>, <span class="string">"NT"</span>, <span class="string">"SA"</span>, <span class="string">"Q"</span>, <span class="string">"NSW"</span>, <span class="string">"V"</span>, <span class="string">"T"</span>})
+ <span class="comment">--all the australia color constraints go here
+</span> aussie:isSolved() <span class="comment">--should return false
+</span> aussie:solveForwardCheck()
+ <span class="comment">-- isSolved should now return true as the values have been set.
+</span> aussie:isSolved()</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:solveConstraints"></a>
+    <strong>TableSalt:solveConstraints (specificCellID)</strong>
+    </dt>
+    <dd>
+    runs the <a href="http://en.wikipedia.org/wiki/AC-3_algorithm">AC3 algorithm</a> to reduce domains/solve the problem
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">specificCellID</span>
+         (optional) useful for running constrains only associated with one cell. If omitted, solveConstraints will use all constraints
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        <code>true</code> if the problem was solved. <code>false</code> otherwise
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "TableSalt:getSmallestDomainID"></a>
+    <strong>TableSalt:getSmallestDomainID ()</strong>
+    </dt>
+    <dd>
+    returns the id associated with the variable with the smallest domain.
+ If there's a tie, it uses the degree heuristic which picks the variable with the larger number of constraints
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+        the id of the variable with the smallest domain
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ linear = TableSalt:new({<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>}, <span class="number">9</span>)
+ <span class="comment">--some of linear's constraints are added here
+</span> linear:solveConstraints()
+ <span class="comment">--after that, I may want to get ahold of the domain the with smallest id
+</span> linear:getSmallestDomainID()
+ </pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:solveForwardCheck"></a>
+    <strong>TableSalt:solveForwardCheck ()</strong>
+    </dt>
+    <dd>
+    runs the forward check algorithm in the current state.
+ It goes through each variable, tries a value from the domain, runs <a href="index.html#TableSalt:solveConstraints">solveConstraints</a>  to prune,
+ backtracks if necessary, and finally determines a solution.
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+        <code>true</code> if the problem is solved. <code>false</code> otherwise
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> aussie = TableSalt:new({<span class="string">"Red"</span>, <span class="string">"Green"</span>, <span class="string">"Blue"</span>}, {<span class="string">"WA"</span>, <span class="string">"NT"</span>, <span class="string">"SA"</span>, <span class="string">"Q"</span>, <span class="string">"NSW"</span>, <span class="string">"V"</span>, <span class="string">"T"</span>})
+ <span class="comment">-- the various australia color problem constraints would go here
+</span> <span class="comment">-- the Australia color problem doesn't benefit from calling solveConstraints as no domains are reduced.
+</span> aussie:solveForwardCheck()</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:solve"></a>
+    <strong>TableSalt:solve ()</strong>
+    </dt>
+    <dd>
+    solve the constraint satisfaction problem.
+ This will call <a href="index.html#TableSalt:solveConstraints">solveConstraints</a>  to reduce the domains and then <a href="index.html#TableSalt:solveForwardCheck">solveForwardCheck</a>  to finish solving the problem
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+        <code>true</code> if the problem was able to be solved. <code>false</code> if not.
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> sudoku = TableSalt:new({<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>}, <span class="number">9</span>, <span class="number">9</span>)
+ sudoku:setAddVarsAfterAnyChange(<span class="keyword">false</span>)
+ sudoku:addConstraintForEachColumn(Pepper.allDiff)
+ <span class="comment">--all the other sudoku constraints go here
+</span> sudoku:solve()
+ sudoku:<span class="global">print</span>() -- <span class="global">print</span> out the problem.</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "TableSalt:print"></a>
+    <strong>TableSalt:print ()</strong>
+    </dt>
+    <dd>
+    prints out the problem either as a table, a row, or a grid.  How it prints out is dependent on how the inputs were given.
+ If the variables were given as a table, it will print out as a table. Otherwise it will print out as a grid.
+
+
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> sudoku = TableSalt:new({<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>}, <span class="number">9</span>, <span class="number">9</span>)
+ <span class="comment">--add all the sudoku constraints here
+</span>
+ <span class="comment">-- will show a 9x9 grid of ?s
+</span> sudoku:<span class="global">print</span>()
+ sudoku:solve()
+ <span class="comment">--will show the solved sudoku puzzle now that it's solved
+</span> sudoku:<span class="global">print</span>()</pre>
+    </ul>
+
+</dd>
+</dl>
+    <h2><a name="Pepper_Constraints"></a>Pepper Constraints </h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "Pepper"></a>
+    <strong>Pepper</strong>
+    </dt>
+    <dd>
+    Pepper Constraints are constraints written as functions that reduce the domain on a set of variables.
+ For more information, check out the documentaton below on a few pepper constraints and <a href="manual/PepperConstraints.md.html#">PepperConstraints.md</a>
+
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Pepper.allDiff"></a>
+    <strong>Pepper.allDiff (section, board)</strong>
+    </dt>
+    <dd>
+    ensures all numbers in a section are of a different value
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">section</span>
+         the id's of all variables the constraint is applied to as a table
+        </li>
+        <li><span class="parameter">board</span>
+         the self referential TableSalt instance
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        the new domain of each of the id's in section as a table.
+ They should correlate so <code>section[1]</code>'s new domain should be the first element in the table that is returned.
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> sudoku = TableSalt:new({<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>}, <span class="number">9</span>, <span class="number">9</span>)
+ <span class="comment">--this will ensure that each the values in each row are all different
+</span> sudoku:addConstraintForEachRow(Pepper.allDiff)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "Pepper.setVal"></a>
+    <strong>Pepper.setVal (section, board, val)</strong>
+    </dt>
+    <dd>
+    sets the value of the cell[s].  Used as a constraint satisfaction function.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">section</span>
+         the id's of all variables the constraint is applied to as a table
+        </li>
+        <li><span class="parameter">board</span>
+         the self referential TableSalt instance
+        </li>
+        <li><span class="parameter">val</span>
+         the value that each variable in the section should be set to
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        the new domain of each of the id's in section as a table.
+ They should correlate so <code>section[1]</code>'s new domain should be the first element in the table that is returned.
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> sudoku = TableSalt:new({<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>}, <span class="number">9</span>, <span class="number">9</span>)
+ <span class="comment">--this will set the value of (1, 1), (2, 2), and (3, 3) to all be 9.
+</span> <span class="comment">--the setVal function is run by various methods to determine values/successes
+</span> sudoku:addConstraintByPairs({{<span class="number">1</span>, <span class="number">1</span>}, {<span class="number">2</span>, <span class="number">2</span>}, {<span class="number">3</span>, <span class="number">3</span>}}, Pepper.setVal, <span class="number">9</span>)</pre>
+    </ul>
+
+</dd>
+</dl>
+    <h2><a name="CSP_module"></a>CSP module </h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "CSP"></a>
+    <strong>CSP</strong>
+    </dt>
+    <dd>
+    CSP module that is passed back by the script.  Containing both the TableSalt class and the Pepper constraints.
+
+
+    <h3>Fields:</h3>
+    <ul>
+        <li><span class="parameter">TableSalt</span>
+         reference to the <a href="index.html#">TableSalt</a>  class
+        </li>
+        <li><span class="parameter">Pepper</span>
+         reference to the <a href="index.html#Pepper">Pepper</a>  constraints
+        </li>
+        <li><span class="parameter">_VERSION</span>
+         the version of the current module
+        </li>
+    </ul>
+
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">
+ <span class="keyword">local</span> CSP = <span class="global">require</span>(<span class="string">'TableSalt/TableSalt'</span>)
+ <span class="keyword">local</span> TableSalt = CSP.TableSalt
+ <span class="keyword">local</span> Pepper = CSP.Pepper</pre>
+    </ul>
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/stevedonovan/LDoc">LDoc 1.4.2</a></i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>
