@@ -2,7 +2,7 @@
 ---------------
 -- ## TableSalt, Lua framework for constraint satisfaction problems
 --
--- It goes well with a wide variety of constraint satisfaction problems. Even ones you cook up yourself!
+-- It goes well with a wide variety of constraint satisfaction problems -- Even ones you cook up yourself!
 --
 -- [Github Page](http://github.com/FourierTransformer/TableSalt)
 --
@@ -267,7 +267,7 @@ end
 -- @usage
 -- local linear = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9)
 -- --id's 1, 3, and 5 have to be different
--- linear:addConstraintByIDs({1, 3, 5}, TableSalt.allDiff)
+-- linear:addConstraintByIDs({1, 3, 5}, Pepper.allDiff)
 --
 function TableSalt:addConstraintByIDs(section, checkFunction, ...)
     local constraintNum = #self.constraints+1
@@ -284,7 +284,7 @@ end
 -- @usage
 -- local sudoku = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9, 9)
 -- -- (1, 1), (5, 2), and (7, 2) all have a value of 4
--- sudoku:addConstraintByPairs({ {1, 1}, {5, 2}, {7, 2} }, TableSalt.setVal, 4)
+-- sudoku:addConstraintByPairs({ {1, 1}, {5, 2}, {7, 2} }, Pepper.setVal, 4)
 --
 function TableSalt:addConstraintByPairs(section, checkFunction, ...)
     local newSectionList = {}
@@ -300,7 +300,7 @@ end
 -- @param ... any additional arguments checkFunction requires
 -- @usage
 -- local aussie = TableSalt:new({"Red", "Green", "Blue"}, {"WA", "NT", "SA", "Q", "NSW", "V", "T"})
--- aussie:addConstraintByNames({ "WA", "NT", "SA" }, TableSalt.allDiff)
+-- aussie:addConstraintByNames({ "WA", "NT", "SA" }, Pepper.allDiff)
 --
 function TableSalt:addConstraintByNames(section, checkFunction, ...)
     local newSectionList = {}
@@ -315,7 +315,7 @@ end
 -- @param ... any additional arguments checkFunction requires
 -- @usage
 -- local sudoku = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9, 9)
--- sudoku:addConstraintForEachRow(TableSalt.allDiff)
+-- sudoku:addConstraintForEachRow(Pepper.allDiff)
 function TableSalt:addConstraintForEachRow(checkFunction, ...)
     for i = 1, self.sizeY do
         local row = {}
@@ -331,7 +331,7 @@ end
 -- @param ... any additional arguments checkFunction requires
 -- @usage
 -- local sudoku = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9, 9)
--- sudoku:addConstraintForEachColumn(TableSalt.allDiff)
+-- sudoku:addConstraintForEachColumn(Pepper.allDiff)
 function TableSalt:addConstraintForEachColumn(checkFunction, ...)
     for i = 1, self.sizeY do
         local col = {}
@@ -347,7 +347,7 @@ end
 -- @param ... any additional arguments checkFunction requires
 -- @usage
 -- local linear = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9)
--- linear:addConstraintForAll(TableSalt.allDiff)
+-- linear:addConstraintForAll(Pepper.allDiff)
 function TableSalt:addConstraintForAll(checkFunction, ...)
     local fullSection = {}
     for i = 1, self.size do
@@ -399,7 +399,7 @@ function TableSalt:isSolved()
     
 end
 
-function TableSalt:solveConstraints(specificConstraints)
+function TableSalt:solveConstraints(specificCellID)
     -- sanity checks
     if self:isSolved() then return true end
 
@@ -407,8 +407,8 @@ function TableSalt:solveConstraints(specificConstraints)
     local frontier = heap:new()
 
     -- if specific constraints were passed in, use those. Otherwise use EVERYTHING.
-    if specificConstraints ~= nil then
-        for q, r in ipairs(specificConstraints) do
+    if specificCellID ~= nil then
+        for q, r in ipairs(self.cells[specificCellID].constraints) do
             local currentConstraint = self.constraints[r]
             frontier:push(currentConstraint, currentConstraint.numCells)
         end
@@ -518,7 +518,7 @@ function TableSalt:solveForwardCheck()
             -- set the value, then try solving the constraints
             self.cells[tinyIndex].value = v
             self.cells[tinyIndex].domain = {v}
-            local wasSucessful = self:solveConstraints(self.cells[tinyIndex].constraints)
+            local wasSucessful = self:solveConstraints(tinyIndex)
 
             -- stupid tail recursion...
             if wasSucessful then
@@ -541,7 +541,7 @@ end
 -- @usage
 -- local sudoku = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9, 9)
 -- sudoku:setAddVarsAfterAnyChange(false)
--- sudoku:addConstraintForEachColumn(TableSalt.allDiff)
+-- sudoku:addConstraintForEachColumn(Pepper.allDiff)
 -- --all the other sudoku constraints go here
 -- sudoku:solve()
 -- sudoku:print() -- print out the problem.
@@ -553,8 +553,63 @@ function TableSalt:solve()
     return passed
 end
 
--- ensures all numbers in a section are of a different value
-function TableSalt.allDiff(section, board)
+--- prints out the problem either as a table, a row, or a grid. How it prints out is dependent on how the inputs were given.
+-- If the variables were given as a table, it will print out as a table. Otherwise it will print out as a grid. 
+-- @usage
+-- local sudoku = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9, 9)
+-- --add all the sudoku constraints here
+--
+-- -- will show a 9x9 grid of ?s
+-- sudoku:print()
+-- sudoku:solve()
+-- --will show the solved sudoku puzzle now that it's solved
+-- sudoku:print()
+function TableSalt:print()
+    if self.usingTable then
+        -- I could do this, but it messes with the order of the user input. Gotta have happy users!
+        -- for i in pairs(self.tableVals) do
+        --     print(i, self:getValueByName(i))
+        -- end
+        -- and this is the only reason I stored the original user input! teehee!
+        for i, v in ipairs(self.normalVals) do
+            print(v, self:getValueByID(i))
+        end
+
+    else
+        for j = 1, self.sizeY do
+            local row = ""
+            for i = 1, self.sizeX do
+                local val = self:getValueByPair(i, j)
+                if val ~= nil then
+                    row = row .. val .. " "
+                else
+                    row = row .. "?" .. " "
+                end
+            end
+            print(row)
+        end
+    end
+end
+
+--- Pepper Constraints
+-- @section public
+
+--- Pepper Constraints are constraints written as functions that reduce the domain on a set of variables.
+-- For more information, check out the documentaton below on a few pepper constraints and [Writing Pepper Constraints](url)
+-- @table Pepper
+local Pepper = {}
+
+--- ensures all numbers in a section are of a different value
+-- @param section the id's of all variables the constraint is applied to as a table
+-- @param board the self referential TableSalt instance
+-- @return the new domain of each of the id's in section as a table. 
+-- They should correlate so `section[1]`'s new domain should be the first element in the table that is returned.
+-- @usage
+-- local sudoku = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9, 9)
+-- --this will ensure that each the values in each row are all different
+-- sudoku:addConstraintForEachRow(Pepper.allDiff)
+--
+function Pepper.allDiff(section, board)
     local valuesToRemove = {}
     local newDomains = {}
     local reverseValuesToRemove = {}
@@ -598,8 +653,19 @@ function TableSalt.allDiff(section, board)
     return newDomains
 end
 
--- sets the value of the cell to the actual value
-function TableSalt.setVal(section, board, val)
+--- sets the value of the cell[s]. Used as a constraint satisfaction function.
+-- @param section the id's of all variables the constraint is applied to as a table
+-- @param board the self referential TableSalt instance
+-- @param val the value that each variable in the section should be set to
+-- @return the new domain of each of the id's in section as a table. 
+-- They should correlate so `section[1]`'s new domain should be the first element in the table that is returned.
+-- @usage
+-- local sudoku = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9, 9)
+-- --this will set the value of (1, 1), (2, 2), and (3, 3) to all be 9.
+-- --the setVal function is run by various methods to determine values/successes
+-- sudoku:addConstraintByPairs({{1, 1}, {2, 2}, {3, 3}}, Pepper.setVal, 9)
+--
+function Pepper.setVal(section, board, val)
     local allValues = {}
     for i = 1, #section do
         allValues [ #allValues+1 ] = {val}
@@ -607,42 +673,23 @@ function TableSalt.setVal(section, board, val)
     return allValues
 end
 
---- prints out the problem either as a table, a row, or a grid. How it prints out is dependent on how the inputs were given.
--- If the variables were given as a table, it will print out as a table. Otherwise it will print out as a grid. 
+--- CSP module
+-- @section public
+
+--- CSP module that is passed back by the script. Containing both the TableSalt class and the Pepper constraints.
+-- @table CSP
+-- @field TableSalt reference to the `TableSalt` class
+-- @field Pepper reference to the `Pepper` constraints
+-- @field _VERSION the version of the current module
 -- @usage
--- local sudoku = TableSalt:new({1, 2, 3, 4, 5, 6, 7, 8, 9}, 9, 9)
--- --add all the sudoku constraints here
+-- local CSP = require('TableSalt/TableSalt')
+-- local TableSalt = CSP.TableSalt
+-- local Pepper = CSP.Pepper
 --
--- -- will show a 9x9 grid of ?s
--- sudoku:print()
--- sudoku:solve()
--- --will show the solved sudoku puzzle now that it's solved
--- sudoku:print()
-function TableSalt:print()
-    if self.usingTable then
-        -- I could do this, but it messes with the order of the user input. Gotta have happy users!
-        -- for i in pairs(self.tableVals) do
-        --     print(i, self:getValueByName(i))
-        -- end
-        -- and this is the only reason I stored the original user input! teehee!
-        for i, v in ipairs(self.normalVals) do
-            print(v, self:getValueByID(i))
-        end
+local CSP = {
+    TableSalt = TableSalt,
+    Pepper = Pepper,
+    _VERSION = ".01"
+}
 
-    else
-        for j = 1, self.sizeY do
-            local row = ""
-            for i = 1, self.sizeX do
-                local val = self:getValueByPair(i, j)
-                if val ~= nil then
-                    row = row .. val .. " "
-                else
-                    row = row .. "?" .. " "
-                end
-            end
-            print(row)
-        end
-    end
-end
-
-return TableSalt
+return CSP
