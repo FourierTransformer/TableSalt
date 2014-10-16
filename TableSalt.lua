@@ -30,20 +30,20 @@ local heap = require (_PATH .. '/util/Peaque/Peaque')
 -- The following four are oddly specifc restore/backup functions. Done this way for Speed/privacy.
 local function backupCells(cells)
     local serial = {{}, {}}
-    for i, v in ipairs(cells) do
+    for i = 1, #cells do
         serial[1][i] = {}
-        for q, r in ipairs(v.domain) do
-            serial[1][i][q] = r
+        for q = 1, #cells[i].domain do
+            serial[1][i][q] = cells[i].domain[q]
         end
-        serial[2][i] = v.value
+        serial[2][i] = cells[i].value
     end
     return serial
 end
 
 local function restoreCells(cells, serial)
-    for i, v in ipairs(cells) do
-        v.domain = serial[1][i]
-        v.value = serial[2][i]
+    for i=1, #cells do
+        cells[i].domain = serial[1][i]
+        cells[i].value = serial[2][i]
     end
 end
 
@@ -137,6 +137,9 @@ function TableSalt:initialize(domain, sizeX, sizeY)
     end
     self.constraints = {}
     self.addVarsAfterAnyChange = true
+
+    self.tinyID = 0
+    self.tinyDomainSize = math.huge
 end
 
 --- switch to toggle when additional constraints should be added for solveConstraints.
@@ -368,10 +371,11 @@ end
 -- aussie:isFilled() -- should return false
 --
 function TableSalt:isFilled()
-    for i, v in ipairs(self.cells) do
-        if v.value == nil then
+    for i=1, #self.cells do
+        if self.cells[i].value == nil then
             return false
         end
+        local currentSize = #self.cells[i].domain
     end
     return true
 end
@@ -406,10 +410,10 @@ end
 
 --- runs the [AC3 algorithm](http://en.wikipedia.org/wiki/AC-3_algorithm) to reduce domains/solve the problem
 -- @param specificCellID (optional) useful for running constrains only associated with one cell. If omitted, solveConstraints will use all constraints
--- @return `true` if the problem was solved. `false` otherwise
+-- @return `true` if all values poosible are filled. `false` otherwise (ie some cell's domain was reduced to 0)
 function TableSalt:solveConstraints(specificCellID)
-    -- sanity checks
-    if self:isSolved() then return true end
+    -- sanity checks (INSANITY NOW)
+    -- if self:isSolved() then return true end
 
     -- init some vars
     local frontier = heap:new()
@@ -430,57 +434,52 @@ function TableSalt:solveConstraints(specificCellID)
 
     while not frontier:isEmpty() do
         local currentConstraint = frontier:pop()
-        if not currentConstraint.passed then
-            local newDomains = currentConstraint.check(self)
-            local passedCurrentConstraint = true
-            for i, v in ipairs(newDomains) do
-                -- gets the cell index from the constraint section list
-                local cellIndex = currentConstraint.section[i]
-                local currentCell = self.cells[cellIndex]
+        local newDomains = currentConstraint.check(self)
+        local passedCurrentConstraint = true
+        for i, v in ipairs(newDomains) do
+            -- gets the cell index from the constraint section list
+            local cellIndex = currentConstraint.section[i]
+            local currentCell = self.cells[cellIndex]
 
-                -- old domain size used to determine what constraints should be re-added
-                local oldSize = #currentCell.domain
-                local currentSize = #v
+            -- old domain size used to determine what constraints should be re-added
+            local oldSize = #currentCell.domain
+            local currentSize = #v
 
-                -- set the cell's domain to v
-                currentCell.domain = v
+            -- set the cell's domain to v
+            currentCell.domain = v
 
-                -- if the domain is greater than one for any value in the section, the constraint hasn't passed
-                if currentSize > 1 then
-                    passedCurrentConstraint = false
-                elseif currentCell.value == nil and currentSize == 1 then
-                    -- however, a cell's value may be set if the length of it's list is 1
-                    currentCell.value = v[1]
+            -- if the domain is greater than one for any value in the section, the constraint hasn't passed
+            -- if currentSize > 1 then
+                -- passedCurrentConstraint = false
+            if currentCell.value == nil and currentSize == 1 then
+                -- however, a cell's value may be set if the length of it's list is 1
+                currentCell.value = v[1]
 
-                    -- add affected constraints back to queue
-                    if not self.addVarsAfterAnyChange then
-                        for q, r in ipairs(currentCell.constraints) do
-                            frontier:push(self.constraints[r])
-                        end
-                    end
-
-                elseif currentSize <= 0 then
-                    return nil
-                end
-
-                -- add any constraints associated with a changed domain
-                if self.addVarsAfterAnyChange and oldSize ~= currentSize then
-                    for i, v in ipairs(currentConstraint.section) do
-                        local cellIndex = currentConstraint.section[i]
-                        for q, r in ipairs(self.cells[cellIndex].constraints) do
-                            frontier:push(self.constraints[r], lastVal)
-                            lastVal = lastVal+1
-                        end
+                -- add affected constraints back to queue
+                if not self.addVarsAfterAnyChange then
+                    for q, r in ipairs(currentCell.constraints) do
+                        frontier:push(self.constraints[r])
                     end
                 end
 
+            elseif currentSize <= 0 then
+                return false
             end
-            -- update constraint status
-            currentConstraint.passed = passedCurrentConstraint
+
+            -- add any constraints associated with a changed domain
+            if self.addVarsAfterAnyChange and oldSize ~= currentSize then
+                for i, v in ipairs(currentConstraint.section) do
+                    local cellIndex = currentConstraint.section[i]
+                    for q, r in ipairs(self.cells[cellIndex].constraints) do
+                        frontier:push(self.constraints[r], lastVal)
+                        lastVal = lastVal+1
+                    end
+                end
+            end
         end
     end
 
-    return self:isSolved()
+    return true
 end
 
 --- returns the id associated with the variable with the smallest domain.
@@ -496,8 +495,9 @@ end
 function TableSalt:getSmallestDomainID()
     local smallestDomainSize = math.huge
     local cellIndex = nil
-    for i, v in ipairs(self.cells) do
-        local currentDomainSize = #v.domain
+    -- for i, v in ipairs(self.cells) do
+    for i = 1, #self.cells do
+        local currentDomainSize = #self.cells[i].domain
         if currentDomainSize > 1 and currentDomainSize < smallestDomainSize then
             -- return cellIndex
             smallestDomainSize = currentDomainSize
@@ -527,31 +527,33 @@ function TableSalt:solveForwardCheck()
     -- find the cell with the smallest domain
     local tinyIndex = self:getSmallestDomainID()
 
-    -- IT EXISTS! Therefore, we can do magic.
-    if tinyIndex ~= nil then
-        for i,v in ipairs(self.cells[tinyIndex].domain) do
-            -- copy the data (in case the constraints fail)
-            local cellCopy = backupCells(self.cells)
-            local constraintCopy = backupConstraints(self.constraints)
+    -- ahhh yiss. going to assign on if em. Let's see what happens!
+    for i,v in ipairs(self.cells[tinyIndex].domain) do
+        -- copy the data (in case the constraints fail)
+        local cellCopy = backupCells(self.cells)
+        local oldIndex = tinyIndex
 
-            -- set the value, then try solving the constraints
-            self.cells[tinyIndex].value = v
-            self.cells[tinyIndex].domain = {v}
-            local wasSucessful = self:solveConstraints(tinyIndex)
+        -- set the value, then try solving the constraints
+        self.cells[tinyIndex].value = v
+        self.cells[tinyIndex].domain = {v}
+        local wasSucessful = self:solveConstraints(tinyIndex)
 
-            -- stupid tail recursion...
-            if wasSucessful then
+        -- so solveConstraints was able to fill up as much as it could
+        if wasSucessful then
+            -- we might be solved!
+            if self:isFilled() then
                 return true
-            elseif wasSucessful == false then
-                local extremeLevel = self:solveForwardCheck(addVarsAfterAnyChange)
-                if extremeLevel then return true end
+            else
+                local extremeLevel = self:solveForwardCheck()
+                if self:isFilled() then return true end    
             end
-
-            -- restore values if things go bad.
-            restoreCells(self.cells, cellCopy)
-            restoreConstraints(self.constraints, constraintCopy)
         end
+
+        -- restore values if things go bad.
+        restoreCells(self.cells, cellCopy)
+
     end
+
 end
 
 --- solve the constraint satisfaction problem.
@@ -565,7 +567,8 @@ end
 -- sudoku:solve()
 -- sudoku:print() -- print out the problem.
 function TableSalt:solve()
-    local passed = self:solveConstraints()
+    self:solveConstraints()
+    local passed = self:isSolved()
     if not passed then
         passed = self:solveForwardCheck()
     end
@@ -630,32 +633,37 @@ local Pepper = {}
 --
 function Pepper.allDiff(section, board)
     local valuesToRemove = {}
+    local numValuesToRemove = 0
     local newDomains = {}
     local reverseValuesToRemove = {}
 
     -- determine which values have been set
-    for i, v in ipairs(section) do
-        local currentValue = board:getValueByID(v)
+    -- for i, v in ipairs(section) do
+    for i = 1, #section do
+        local currentValue = board:getValueByID(section[i])
         if currentValue ~= nil then
             if reverseValuesToRemove[currentValue] == true then
-                newDomains[i] = {}
+                return {{}}
             else
                 reverseValuesToRemove[currentValue] = true
-                table.insert(valuesToRemove, currentValue)
+                -- table.insert(valuesToRemove, currentValue)
+                valuesToRemove[numValuesToRemove+1] = currentValue
+                numValuesToRemove = numValuesToRemove + 1
                 newDomains[i] = {currentValue}
             end 
         end
     end
 
     -- remove those values from the domain of the others
-    for ind, w in ipairs(section) do
-        local currentValue = board:getValueByID(w)
-        local currentDomain = board:getDomainByID(w)
+    -- for ind, w in ipairs(section) do
+    for ind = 1, #section do 
+        local currentValue = board:getValueByID(section[ind])
+        local currentDomain = board:getDomainByID(section[ind])
         if currentValue == nil then
             local indicesToRemove = {}
-            for i, v in ipairs(currentDomain) do
-                for j, t in ipairs(valuesToRemove) do
-                    if v == t then
+            for i=1, #currentDomain do
+                for j=1, #valuesToRemove do
+                    if currentDomain[i] == valuesToRemove[j] then
                         indicesToRemove[ #indicesToRemove+1 ] = i
                     end
                 end
