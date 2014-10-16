@@ -632,8 +632,6 @@ local Pepper = {}
 -- sudoku:addConstraintForEachRow(Pepper.allDiff)
 --
 function Pepper.allDiff(section, board)
-    local valuesToRemove = {}
-    local numValuesToRemove = 0
     local newDomains = {}
     local reverseValuesToRemove = {}
 
@@ -642,13 +640,11 @@ function Pepper.allDiff(section, board)
     for i = 1, #section do
         local currentValue = board:getValueByID(section[i])
         if currentValue ~= nil then
+            -- ensure all values in this section are different. Error out otherwise.
             if reverseValuesToRemove[currentValue] == true then
                 return {{}}
             else
                 reverseValuesToRemove[currentValue] = true
-                -- table.insert(valuesToRemove, currentValue)
-                valuesToRemove[numValuesToRemove+1] = currentValue
-                numValuesToRemove = numValuesToRemove + 1
                 newDomains[i] = {currentValue}
             end 
         end
@@ -659,19 +655,24 @@ function Pepper.allDiff(section, board)
     for ind = 1, #section do 
         local currentValue = board:getValueByID(section[ind])
         local currentDomain = board:getDomainByID(section[ind])
+        local domainSize = #currentDomain
         if currentValue == nil then
-            local indicesToRemove = {}
-            for i=1, #currentDomain do
-                for j=1, #valuesToRemove do
-                    if currentDomain[i] == valuesToRemove[j] then
-                        indicesToRemove[ #indicesToRemove+1 ] = i
-                    end
+            for i=1, domainSize do
+                if reverseValuesToRemove[currentDomain[i]] then
+                    currentDomain[i] = nil
                 end
             end
-
-            for i = #indicesToRemove, 1, -1 do
-                table.remove(currentDomain, indicesToRemove[i])
+            local j = 0;
+            for i=1, domainSize do
+                if currentDomain[i] ~= nil then
+                    j = j + 1
+                    currentDomain[j] = currentDomain[i]
+                end
             end
+            for i = j+1, domainSize do
+                currentDomain[i] = nil
+            end
+
             newDomains[ind] = currentDomain
         end
     end
