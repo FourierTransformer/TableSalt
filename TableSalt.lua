@@ -31,10 +31,7 @@ local heap = require (_PATH .. '/util/Peaque/Peaque')
 local function backupCells(cells)
     local serial = {{}, {}}
     for i = 1, #cells do
-        serial[1][i] = {}
-        for q = 1, #cells[i].domain do
-            serial[1][i][q] = cells[i].domain[q]
-        end
+        serial[1][i] = {unpack(cells[i].domain)}
         serial[2][i] = cells[i].value
     end
     return serial
@@ -45,20 +42,6 @@ local function restoreCells(cells, serial)
         cells[i].domain = serial[1][i]
         cells[i].value = serial[2][i]
     end
-end
-
-local function backupConstraints(constraints)
-    local serial = {}
-    for i, v in ipairs(constraints) do
-        serial[i] = v.passed
-    end
-    return serial
-end
-
-local function restoreConstraints(constraints, passedArray)
-    for i, v in ipairs(constraints) do
-        v.passed = passedArray[i]
-    end    
 end
 
 -- ================
