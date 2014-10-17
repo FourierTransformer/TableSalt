@@ -28,17 +28,17 @@ local heap = require (_PATH .. '/util/Peaque/Peaque')
 -- Private methods
 -- ================
 -- The following four are oddly specifc restore/backup functions. Done this way for Speed/privacy.
--- local function backupCells(cells)
+-- local function backupCells(cells, size)
 --     local serial = {{}, {}}
---     for i = 1, #cells do
+--     for i = 1, size do
 --         serial[1][i] = {unpack(cells.domain[i])}
 --         serial[2][i] = cells.value[i]
 --     end
 --     return serial
 -- end
 
--- local function restoreCells(cells, serial)
---     for i=1, #cells do
+-- local function restoreCells(cells, serial, size)
+--     for i=1, size do
 --         cells.domain[i] = serial[1][i]
 --         cells.value[i] = serial[2][i]
 --     end
@@ -122,7 +122,7 @@ function TableSalt:initialize(inDomain, sizeX, sizeY)
         self.cells.domain[i] = newDomain
         self.cells.value[i] = nil
     end
-    self.constraints = {}
+    self.allConstraints = {}
     self.addVarsAfterAnyChange = true
 
     self.tinyID = 0
@@ -281,8 +281,8 @@ end
 -- linear:addConstraintByIDs({1, 3, 5}, Pepper.allDiff)
 --
 function TableSalt:addConstraintByIDs(section, pepperConstraint, ...)
-    local constraintNum = #self.constraints+1
-    self.constraints[ constraintNum ] = constraint:new(section, pepperConstraint, ...)
+    local constraintNum = #self.allConstraints+1
+    self.allConstraints[ constraintNum ] = constraint:new(section, pepperConstraint, ...)
     for i,v in ipairs(section) do
         table.insert(self.cells[v].constraints, constraintNum)
     end
@@ -397,7 +397,7 @@ function TableSalt:isSolved()
     if not self:isFilled() then return false end
 
     -- run through all the constraints. Make sure they pass
-    for i, v in ipairs(self.constraints) do
+    for i, v in ipairs(self.allConstraints) do
         local currentDomains = v.check(self)
         for q, r in ipairs(currentDomains) do
             if #r ~= 1 then
@@ -424,11 +424,11 @@ function TableSalt:solveConstraints(specificCellID)
     -- if specific constraints were passed in, use those. Otherwise use EVERYTHING.
     if specificCellID ~= nil then
         for q, r in ipairs(self.cells[specificCellID].constraints) do
-            local currentConstraint = self.constraints[r]
+            local currentConstraint = self.allConstraints[r]
             frontier:push(currentConstraint, currentConstraint.numCells)
         end
     else
-        for i, v in ipairs(self.constraints) do
+        for i, v in ipairs(self.allConstraints) do
             frontier:push(v, v.numCells)
         end
     end
@@ -461,7 +461,7 @@ function TableSalt:solveConstraints(specificCellID)
                 -- add affected constraints back to queue
                 if not self.addVarsAfterAnyChange then
                     for q, r in ipairs(currentCell.constraints) do
-                        frontier:push(self.constraints[r])
+                        frontier:push(self.allConstraints[r])
                     end
                 end
 
@@ -537,7 +537,7 @@ function TableSalt:solveForwardCheck()
 
         -- set the value, then try solving the constraints
         self.cells.value[tinyIndex] = v
-        self.cells[tinyIndex].domain = {v}
+        self.cells.domain[tinyIndex] = {v}
         local wasSucessful = self:solveConstraints(tinyIndex)
 
         -- so solveConstraints was able to fill up as much as it could
