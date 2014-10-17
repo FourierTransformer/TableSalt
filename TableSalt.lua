@@ -28,21 +28,21 @@ local heap = require (_PATH .. '/util/Peaque/Peaque')
 -- Private methods
 -- ================
 -- The following four are oddly specifc restore/backup functions. Done this way for Speed/privacy.
-local function backupCells(cells)
-    local serial = {{}, {}}
-    for i = 1, #cells do
-        serial[1][i] = {unpack(cells[i].domain)}
-        serial[2][i] = cells[i].value
-    end
-    return serial
-end
+-- local function backupCells(cells)
+--     local serial = {{}, {}}
+--     for i = 1, #cells do
+--         serial[1][i] = {unpack(cells.domain[i])}
+--         serial[2][i] = cells.value[i]
+--     end
+--     return serial
+-- end
 
-local function restoreCells(cells, serial)
-    for i=1, #cells do
-        cells[i].domain = serial[1][i]
-        cells[i].value = serial[2][i]
-    end
-end
+-- local function restoreCells(cells, serial)
+--     for i=1, #cells do
+--         cells.domain[i] = serial[1][i]
+--         cells.value[i] = serial[2][i]
+--     end
+-- end
 
 -- ================
 -- Module classes
@@ -51,10 +51,9 @@ end
 --- `cell` class
 -- @type cell
 local cell = class()
-function cell:initialize(id, domain)
-    self.id = id
-    self.domain = domain
-    self.value = nil
+function cell:initialize()
+    -- self.id = id
+    -- self.domain = domain
     self.constraints = {}
 end
 
@@ -62,7 +61,6 @@ end
 -- @type constraint
 local constraint = class()
 function constraint:initialize(section, checkFunction, ...)
-    self.passed = false
     self.section = section
     self.numCells = #self.section
     self.args = ...
@@ -86,7 +84,7 @@ local TableSalt = class()
 -- local sudoku = TableSalt:new({1,2,3,4,5,6,7,8,9}, 9, 9) -- for sudoku. Creates a 9x9 grid
 -- local linear = TableSalt:new({1,2,3,4,5,6,7,8,9}, 9) -- basically creates a 9x1 grid, for problems that don't really require a grid, but can be enumerated
 --
-function TableSalt:initialize(domain, sizeX, sizeY)
+function TableSalt:initialize(inDomain, sizeX, sizeY)
     -- set a "flag"
     self.usingTable = false
     if type(sizeX) == "table" then
@@ -110,19 +108,41 @@ function TableSalt:initialize(domain, sizeX, sizeY)
 
     self.sizeY = sizeY or 1
     self.size = self.sizeX * self.sizeY
+    
     self.cells = {}
+    self.cells.value = {}
+    self.cells.domain = {}
+    
     for i = 1, self.size do
         local newDomain = {}
-        for j = 1, #domain do
-            newDomain[j] = domain[j]
+        for j = 1, #inDomain do
+            newDomain[j] = inDomain[j]
         end
-        self.cells[i] = cell:new(i, newDomain)
+        self.cells[i] = cell:new()
+        self.cells.domain[i] = newDomain
+        self.cells.value[i] = nil
     end
     self.constraints = {}
     self.addVarsAfterAnyChange = true
 
     self.tinyID = 0
     self.tinyDomainSize = math.huge
+end
+
+function TableSalt:backupCells()
+    local serial = {{}, {}}
+    for i = 1, self.size do
+        serial[1][i] = {unpack(self.cells.domain[i])}
+        serial[2][i] = self.cells.value[i]
+    end
+    return serial
+end
+
+function TableSalt:restoreCells(serial)
+    for i=1, self.size do
+        self.cells.domain[i] = serial[1][i]
+        self.cells.value[i] = serial[2][i]
+    end
 end
 
 --- switch to toggle when additional constraints should be added for solveConstraints.
@@ -179,7 +199,7 @@ end
 -- linear:getValueByID(7) -- will return the value for the 7th item
 --
 function TableSalt:getValueByID(i)
-    return self.cells[i].value
+    return self.cells.value[i]
 end
 
 --- Returns the value given a name
@@ -219,7 +239,7 @@ end
 -- linear:getDomainyID(7) -- will return the domain for the 7th item. Ex: {4, 6, 8}
 --
 function TableSalt:getDomainByID(i)
-    return self.cells[i].domain
+    return self.cells.domain[i]
 end
 
 --- Returns the domain given a name
@@ -355,10 +375,10 @@ end
 --
 function TableSalt:isFilled()
     for i=1, #self.cells do
-        if self.cells[i].value == nil then
+        if self.cells.value[i] == nil then
             return false
         end
-        local currentSize = #self.cells[i].domain
+        local currentSize = #self.cells.domain[i]
     end
     return true
 end
@@ -425,18 +445,18 @@ function TableSalt:solveConstraints(specificCellID)
             local currentCell = self.cells[cellIndex]
 
             -- old domain size used to determine what constraints should be re-added
-            local oldSize = #currentCell.domain
+            local oldSize = #self.cells.domain[cellIndex]
             local currentSize = #v
 
             -- set the cell's domain to v
-            currentCell.domain = v
+            self.cells.domain[cellIndex] = v
 
             -- if the domain is greater than one for any value in the section, the constraint hasn't passed
             -- if currentSize > 1 then
                 -- passedCurrentConstraint = false
-            if currentCell.value == nil and currentSize == 1 then
+            if self.cells.value[cellIndex] == nil and currentSize == 1 then
                 -- however, a cell's value may be set if the length of it's list is 1
-                currentCell.value = v[1]
+                self.cells.value[cellIndex] = v[1]
 
                 -- add affected constraints back to queue
                 if not self.addVarsAfterAnyChange then
@@ -480,7 +500,7 @@ function TableSalt:getSmallestDomainID()
     local cellIndex = nil
     -- for i, v in ipairs(self.cells) do
     for i = 1, #self.cells do
-        local currentDomainSize = #self.cells[i].domain
+        local currentDomainSize = #self.cells.domain[i]
         if currentDomainSize > 1 and currentDomainSize < smallestDomainSize then
             -- return cellIndex
             smallestDomainSize = currentDomainSize
@@ -511,13 +531,12 @@ function TableSalt:solveForwardCheck()
     local tinyIndex = self:getSmallestDomainID()
 
     -- ahhh yiss. going to assign on if em. Let's see what happens!
-    for i,v in ipairs(self.cells[tinyIndex].domain) do
+    for i,v in ipairs(self.cells.domain[tinyIndex]) do
         -- copy the data (in case the constraints fail)
-        local cellCopy = backupCells(self.cells)
-        local oldIndex = tinyIndex
+        local cellCopy = self:backupCells()
 
         -- set the value, then try solving the constraints
-        self.cells[tinyIndex].value = v
+        self.cells.value[tinyIndex] = v
         self.cells[tinyIndex].domain = {v}
         local wasSucessful = self:solveConstraints(tinyIndex)
 
@@ -533,7 +552,7 @@ function TableSalt:solveForwardCheck()
         end
 
         -- restore values if things go bad.
-        restoreCells(self.cells, cellCopy)
+        self:restoreCells(cellCopy)
 
     end
 
