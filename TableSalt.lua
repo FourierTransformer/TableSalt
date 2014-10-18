@@ -106,11 +106,11 @@ function TableSalt:initialize(inDomain, sizeX, sizeY)
     self.cells.constraints = {}
     
     for i = 1, self.size do
-        local newDomain = {}
-        for j = 1, #inDomain do
-            newDomain[j] = inDomain[j]
-        end
-        self.cells.domain[i] = newDomain
+        -- local newDomain = {}
+        -- for j = 1, #inDomain do
+            -- newDomain[j] = inDomain[j]
+        -- end
+        self.cells.domain[i] = {unpack(inDomain)}
         self.cells.value[i] = nil
         self.cells.constraints[i] = {}
     end
