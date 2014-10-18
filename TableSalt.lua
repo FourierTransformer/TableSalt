@@ -24,6 +24,9 @@ local _PATH = (...):gsub('TableSalt/','')
 local class = require(_PATH .. '/util/util')
 local heap = require (_PATH .. '/util/Peaque/Peaque')
 
+local ipairs = ipairs
+local unpack = unpack
+
 -- ================
 -- Private methods
 -- ================
@@ -112,11 +115,12 @@ function TableSalt:initialize(domain, sizeX, sizeY)
     self.size = self.sizeX * self.sizeY
     self.cells = {}
     for i = 1, self.size do
-        local newDomain = {}
-        for j = 1, #domain do
-            newDomain[j] = domain[j]
-        end
-        self.cells[i] = cell:new(i, newDomain)
+        -- local newDomain = {}
+        -- for j = 1, #domain do
+            -- newDomain[j] = domain[j]
+        -- end
+
+        self.cells[i] = cell:new(i, {unpack(domain)})
     end
     self.constraints = {}
     self.addVarsAfterAnyChange = true
@@ -514,7 +518,6 @@ function TableSalt:solveForwardCheck()
     for i,v in ipairs(self.cells[tinyIndex].domain) do
         -- copy the data (in case the constraints fail)
         local cellCopy = backupCells(self.cells)
-        local oldIndex = tinyIndex
 
         -- set the value, then try solving the constraints
         self.cells[tinyIndex].value = v
@@ -636,10 +639,9 @@ function Pepper.allDiff(section, board)
     -- remove those values from the domain of the others
     -- for ind, w in ipairs(section) do
     for ind = 1, #section do 
-        local currentValue = board:getValueByID(section[ind])
         local currentDomain = board:getDomainByID(section[ind])
         local domainSize = #currentDomain
-        if currentValue == nil then
+        if domainSize > 1 then
             for i=1, domainSize do
                 if reverseValuesToRemove[currentDomain[i]] then
                     currentDomain[i] = nil
