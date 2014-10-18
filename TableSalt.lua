@@ -48,15 +48,6 @@ local heap = require (_PATH .. '/util/Peaque/Peaque')
 -- Module classes
 -- ================
 
---- `cell` class
--- @type cell
-local cell = class()
-function cell:initialize()
-    -- self.id = id
-    -- self.domain = domain
-    self.constraints = {}
-end
-
 --- `constraint` class
 -- @type constraint
 local constraint = class()
@@ -112,15 +103,16 @@ function TableSalt:initialize(inDomain, sizeX, sizeY)
     self.cells = {}
     self.cells.value = {}
     self.cells.domain = {}
+    self.cells.constraints = {}
     
     for i = 1, self.size do
         local newDomain = {}
         for j = 1, #inDomain do
             newDomain[j] = inDomain[j]
         end
-        self.cells[i] = cell:new()
         self.cells.domain[i] = newDomain
         self.cells.value[i] = nil
+        self.cells.constraints[i] = {}
     end
     self.allConstraints = {}
     self.addVarsAfterAnyChange = true
@@ -284,7 +276,7 @@ function TableSalt:addConstraintByIDs(section, pepperConstraint, ...)
     local constraintNum = #self.allConstraints+1
     self.allConstraints[ constraintNum ] = constraint:new(section, pepperConstraint, ...)
     for i,v in ipairs(section) do
-        table.insert(self.cells[v].constraints, constraintNum)
+        table.insert(self.cells.constraints[v], constraintNum)
     end
 end
 
@@ -374,7 +366,7 @@ end
 -- aussie:isFilled() -- should return false
 --
 function TableSalt:isFilled()
-    for i=1, #self.cells do
+    for i=1, self.size do
         if self.cells.value[i] == nil then
             return false
         end
@@ -423,7 +415,7 @@ function TableSalt:solveConstraints(specificCellID)
 
     -- if specific constraints were passed in, use those. Otherwise use EVERYTHING.
     if specificCellID ~= nil then
-        for q, r in ipairs(self.cells[specificCellID].constraints) do
+        for q, r in ipairs(self.cells.constraints[specificCellID]) do
             local currentConstraint = self.allConstraints[r]
             frontier:push(currentConstraint, currentConstraint.numCells)
         end
@@ -442,7 +434,7 @@ function TableSalt:solveConstraints(specificCellID)
         for i, v in ipairs(newDomains) do
             -- gets the cell index from the constraint section list
             local cellIndex = currentConstraint.section[i]
-            local currentCell = self.cells[cellIndex]
+            -- local currentCell = self.cells[cellIndex]
 
             -- old domain size used to determine what constraints should be re-added
             local oldSize = #self.cells.domain[cellIndex]
@@ -460,7 +452,7 @@ function TableSalt:solveConstraints(specificCellID)
 
                 -- add affected constraints back to queue
                 if not self.addVarsAfterAnyChange then
-                    for q, r in ipairs(currentCell.constraints) do
+                    for q, r in ipairs(self.cells.constraints[cellIndex]) do
                         frontier:push(self.allConstraints[r])
                     end
                 end
@@ -473,7 +465,7 @@ function TableSalt:solveConstraints(specificCellID)
             if self.addVarsAfterAnyChange and oldSize ~= currentSize then
                 for i, v in ipairs(currentConstraint.section) do
                     local cellIndex = currentConstraint.section[i]
-                    for q, r in ipairs(self.cells[cellIndex].constraints) do
+                    for q, r in ipairs(self.cells.constraints[cellIndex]) do
                         frontier:push(self.constraints[r], lastVal)
                         lastVal = lastVal+1
                     end
@@ -499,7 +491,7 @@ function TableSalt:getSmallestDomainID()
     local smallestDomainSize = math.huge
     local cellIndex = nil
     -- for i, v in ipairs(self.cells) do
-    for i = 1, #self.cells do
+    for i = 1, self.size do
         local currentDomainSize = #self.cells.domain[i]
         if currentDomainSize > 1 and currentDomainSize < smallestDomainSize then
             -- return cellIndex
@@ -507,7 +499,7 @@ function TableSalt:getSmallestDomainID()
             cellIndex = i
         elseif currentDomainSize == smallestDomainSize then
             -- Degree heuristic
-            if #self.cells[i].constraints > #self.cells[cellIndex].constraints then
+            if #self.cells.constraints[i] > #self.cells.constraints[cellIndex] then
                 cellIndex = i
             end
         end
