@@ -31,21 +31,21 @@ local unpack = unpack
 -- Private methods
 -- ================
 -- The following four are oddly specifc restore/backup functions. Done this way for Speed/privacy.
-local function backupCells(cells)
-    local serial = {{}, {}}
-    for i = 1, #cells do
-        serial[1][i] = {unpack(cells[i].domain)}
-        serial[2][i] = cells[i].value
+    local function backupCells(cells)
+        local serial = {{}, {}}
+        for i = 1, #cells do
+            serial[1][i] = {unpack(cells[i].domain)}
+            serial[2][i] = cells[i].value
+        end
+        return serial
     end
-    return serial
-end
-
-local function restoreCells(cells, serial)
-    for i=1, #cells do
-        cells[i].domain = serial[1][i]
-        cells[i].value = serial[2][i]
+    
+    local function restoreCells(cells, serial)
+        for i=1, #cells do
+            cells[i].domain = serial[1][i]
+            cells[i].value = serial[2][i]
+        end
     end
-end
 
 -- ================
 -- Module classes
@@ -54,8 +54,8 @@ end
 --- `cell` class
 -- @type cell
 local cell = class()
-function cell:initialize(id, domain)
-    self.id = id
+function cell:initialize(domain)
+    -- self.id = id
     self.domain = domain
     self.value = nil
     self.constraints = {}
@@ -65,7 +65,6 @@ end
 -- @type constraint
 local constraint = class()
 function constraint:initialize(section, checkFunction, ...)
-    self.passed = false
     self.section = section
     self.numCells = #self.section
     self.args = ...
@@ -120,7 +119,7 @@ function TableSalt:initialize(domain, sizeX, sizeY)
             -- newDomain[j] = domain[j]
         -- end
 
-        self.cells[i] = cell:new(i, {unpack(domain)})
+        self.cells[i] = cell:new({unpack(domain)})
     end
     self.constraints = {}
     self.addVarsAfterAnyChange = true
