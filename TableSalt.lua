@@ -681,7 +681,12 @@ end
 function Pepper.setVal(section, board, val)
     local allValues = {}
     for i = 1, #section do
-        allValues [ #allValues+1 ] = {val}
+        local currentValue = board:getValueByID(section[i])
+        if currentValue == nil then
+            allValues[i] = {val}
+        elseif currentValue ~= val then
+            return {{}}
+        end
     end
     return allValues
 end
