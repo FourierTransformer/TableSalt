@@ -24,6 +24,9 @@ local _PATH = (...):gsub('TableSalt/','')
 local class = require(_PATH .. '/util/util')
 local heap = require (_PATH .. '/util/Peaque/Peaque')
 
+local ipairs = ipairs
+local unpack = unpack
+
 -- ================
 -- Private methods
 -- ================
@@ -443,10 +446,13 @@ function TableSalt:solveConstraints(specificCellID)
             -- set the cell's domain to v
             self.cells.domain[cellIndex] = v
 
+
+            if currentSize <= 0 then
+                return false
             -- if the domain is greater than one for any value in the section, the constraint hasn't passed
             -- if currentSize > 1 then
                 -- passedCurrentConstraint = false
-            if self.cells.value[cellIndex] == nil and currentSize == 1 then
+            elseif self.cells.value[cellIndex] == nil and currentSize == 1 then
                 -- however, a cell's value may be set if the length of it's list is 1
                 self.cells.value[cellIndex] = v[1]
 
@@ -456,9 +462,6 @@ function TableSalt:solveConstraints(specificCellID)
                         frontier:push(self.allConstraints[r])
                     end
                 end
-
-            elseif currentSize <= 0 then
-                return false
             end
 
             -- add any constraints associated with a changed domain
@@ -524,8 +527,8 @@ function TableSalt:solveForwardCheck()
 
     -- ahhh yiss. going to assign on if em. Let's see what happens!
     for i,v in ipairs(self.cells.domain[tinyIndex]) do
-        -- copy the data (in case the constraints fail)
         local cellCopy = self:backupCells()
+        -- copy the data (in case the constraints fail)
 
         -- set the value, then try solving the constraints
         self.cells.value[tinyIndex] = v
@@ -535,11 +538,11 @@ function TableSalt:solveForwardCheck()
         -- so solveConstraints was able to fill up as much as it could
         if wasSucessful then
             -- we might be solved!
-            if self:isFilled() then
+            if self:isSolved() then
                 return true
             else
                 local extremeLevel = self:solveForwardCheck()
-                if self:isFilled() then return true end    
+                if self:isSolved() then return true end    
             end
         end
 
@@ -647,10 +650,9 @@ function Pepper.allDiff(section, board)
     -- remove those values from the domain of the others
     -- for ind, w in ipairs(section) do
     for ind = 1, #section do 
-        local currentValue = board:getValueByID(section[ind])
         local currentDomain = board:getDomainByID(section[ind])
         local domainSize = #currentDomain
-        if currentValue == nil then
+        if domainSize > 1 then
             for i=1, domainSize do
                 if reverseValuesToRemove[currentDomain[i]] then
                     currentDomain[i] = nil
@@ -690,7 +692,12 @@ end
 function Pepper.setVal(section, board, val)
     local allValues = {}
     for i = 1, #section do
-        allValues [ #allValues+1 ] = {val}
+        local currentValue = board:getValueByID(section[i])
+        if currentValue == nil then
+            allValues[i] = {val}
+        elseif currentValue ~= val then
+            return {{}}
+        end
     end
     return allValues
 end
