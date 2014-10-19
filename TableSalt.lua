@@ -358,11 +358,10 @@ end
 -- aussie:isFilled() -- should return false
 --
 function TableSalt:isFilled()
-    for i=1, #self.cells do
+    for i=1, self.size do
         if self.cells[i].value == nil then
             return false
         end
-        local currentSize = #self.cells[i].domain
     end
     return true
 end
@@ -399,8 +398,8 @@ end
 -- @param specificCellID (optional) useful for running constrains only associated with one cell. If omitted, solveConstraints will use all constraints
 -- @return `true` if all values poosible are filled. `false` otherwise (ie some cell's domain was reduced to 0)
 function TableSalt:solveConstraints(specificCellID)
-    -- sanity checks (INSANITY NOW)
-    -- if self:isSolved() then return true end
+    -- sanity checks
+    if self:isFilled() then return true end
 
     -- init some vars
     local frontier = heap:new()
@@ -483,7 +482,7 @@ function TableSalt:getSmallestDomainID()
     local smallestDomainSize = math.huge
     local cellIndex = nil
     -- for i, v in ipairs(self.cells) do
-    for i = 1, #self.cells do
+    for i = 1, self.size do
         local currentDomainSize = #self.cells[i].domain
         if currentDomainSize > 1 and currentDomainSize < smallestDomainSize then
             -- return cellIndex
@@ -494,6 +493,9 @@ function TableSalt:getSmallestDomainID()
             if #self.cells[i].constraints > #self.cells[cellIndex].constraints then
                 cellIndex = i
             end
+        -- crazy debugs stuffss
+        -- elseif currentDomainSize == 1 then
+            -- print(i, self:getValueByID(i), table.concat(self:getDomainByID(i), ","))
         end
     end
     return cellIndex
@@ -530,7 +532,8 @@ function TableSalt:solveForwardCheck()
             if self:isFilled() then
                 return true
             else
-                local extremeLevel = self:solveForwardCheck()
+                -- WE HAVE TO GO DEEPER!
+                self:solveForwardCheck()
                 if self:isFilled() then return true end    
             end
         end
