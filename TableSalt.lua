@@ -134,10 +134,10 @@ function TableSalt:backupCells()
 end
 
 function TableSalt:restoreCells(serial)
-    for i=1, self.size do
-        self.cells.domain[i] = serial[1][i]
-        self.cells.value[i] = serial[2][i]
-    end
+    -- for i=1, self.size do
+        self.cells.domain = serial[1]
+        self.cells.value = serial[2]
+    -- end
 end
 
 --- switch to toggle when additional constraints should be added for solveConstraints.
