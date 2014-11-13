@@ -31,21 +31,21 @@ local unpack = unpack
 -- Private methods
 -- ================
 -- The following four are oddly specifc restore/backup functions. Done this way for Speed/privacy.
-    local function backupCells(cells)
-        local serial = {{}, {}}
-        for i = 1, #cells do
-            serial[1][i] = {unpack(cells[i].domain)}
-            serial[2][i] = cells[i].value
-        end
-        return serial
-    end
-    
-    local function restoreCells(cells, serial)
-        for i=1, #cells do
-            cells[i].domain = serial[1][i]
-            cells[i].value = serial[2][i]
-        end
-    end
+-- local function backupCells(cells, cellValue)
+--     local serial = {{}, {}}
+--     for i = 1, #cells do
+--         serial[1][i] = {unpack(cells[i].domain)}
+--         serial[2][i] = cellValue[i]
+--     end
+--     return serial
+-- end
+
+-- local function restoreCells(cells, cellValue, serial)
+--     for i=1, #cells do
+--         cells[i].domain = serial[1][i]
+--         cellValue[i] = serial[2][i]
+--     end
+-- end
 
 -- ================
 -- Module classes
@@ -57,7 +57,7 @@ local cell = class()
 function cell:initialize(domain)
     -- self.id = id
     self.domain = domain
-    self.value = nil
+    -- self.value = nil
     self.constraints = {}
 end
 
@@ -74,6 +74,22 @@ end
 --- `TableSalt` class
 -- @type TableSalt
 local TableSalt = class()
+
+function TableSalt:backupCells()
+    local serial = {{}, {}}
+    for i = 1, self.size do
+        serial[1][i] = {unpack(self.cells[i].domain)}
+        serial[2][i] = self.cellValue[i]
+    end
+    return serial
+end
+
+function TableSalt:restoreCells(serial)
+    for i=1, self.size do
+        self.cells[i].domain = serial[1][i]
+        self.cellValue[i] = serial[2][i]
+    end
+end
 
 --- Creates a new `TableSalt` instance. This will initialize a table, where each cell has a unique id which hold
 -- a value and a domain that can be accessed through various getters, as described below.
@@ -113,6 +129,7 @@ function TableSalt:initialize(domain, sizeX, sizeY)
     self.sizeY = sizeY or 1
     self.size = self.sizeX * self.sizeY
     self.cells = {}
+    self.cellValue = {}
     for i = 1, self.size do
         -- local newDomain = {}
         -- for j = 1, #domain do
@@ -182,7 +199,7 @@ end
 -- linear:getValueByID(7) -- will return the value for the 7th item
 --
 function TableSalt:getValueByID(i)
-    return self.cells[i].value
+    return self.cellValue[i]
 end
 
 --- Returns the value given a name
@@ -358,7 +375,7 @@ end
 --
 function TableSalt:isFilled()
     for i=1, self.size do
-        if self.cells[i].value == nil then
+        if self.cellValue[i] == nil then
             return false
         end
     end
@@ -436,9 +453,9 @@ function TableSalt:solveConstraints(specificCellID)
             -- if the domain is greater than one for any value in the section, the constraint hasn't passed
             -- if currentSize > 1 then
                 -- passedCurrentConstraint = false
-            if currentCell.value == nil and currentSize == 1 then
+            if self.cellValue[cellIndex] == nil and currentSize == 1 then
                 -- however, a cell's value may be set if the length of it's list is 1
-                currentCell.value = v[1]
+                self.cellValue[cellIndex] = v[1]
 
                 -- add affected constraints back to queue
                 if not self.addVarsAfterAnyChange then
@@ -518,10 +535,10 @@ function TableSalt:solveForwardCheck()
     -- ahhh yiss. going to assign on if em. Let's see what happens!
     for i,v in ipairs(self.cells[tinyIndex].domain) do
         -- copy the data (in case the constraints fail)
-        local cellCopy = backupCells(self.cells)
+        local cellCopy = self:backupCells()
 
         -- set the value, then try solving the constraints
-        self.cells[tinyIndex].value = v
+        self.cellValue[tinyIndex] = v
         self.cells[tinyIndex].domain = {v}
         local wasSucessful = self:solveConstraints(tinyIndex)
 
@@ -538,7 +555,7 @@ function TableSalt:solveForwardCheck()
         end
 
         -- restore values if things go bad.
-        restoreCells(self.cells, cellCopy)
+        self:restoreCells(cellCopy)
 
     end
 
