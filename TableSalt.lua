@@ -54,11 +54,11 @@ local unpack = unpack
 --- `cell` class
 -- @type cell
 local cell = class()
-function cell:initialize(domain)
+function cell:initialize()
     -- self.id = id
-    self.domain = domain
+    -- self.domain = domain
     -- self.value = nil
-    self.constraints = {}
+    -- self.constraints = {}
 end
 
 --- `constraint` class
@@ -78,17 +78,15 @@ local TableSalt = class()
 function TableSalt:backupCells()
     local serial = {{}, {}}
     for i = 1, self.size do
-        serial[1][i] = {unpack(self.cells[i].domain)}
+        serial[1][i] = {unpack(self.cellDomain[i])}
         serial[2][i] = self.cellValue[i]
     end
     return serial
 end
 
 function TableSalt:restoreCells(serial)
-    for i=1, self.size do
-        self.cells[i].domain = serial[1][i]
-        self.cellValue[i] = serial[2][i]
-    end
+    self.cellDomain = serial[1]
+    self.cellValue = serial[2]
 end
 
 --- Creates a new `TableSalt` instance. This will initialize a table, where each cell has a unique id which hold
@@ -128,15 +126,18 @@ function TableSalt:initialize(domain, sizeX, sizeY)
 
     self.sizeY = sizeY or 1
     self.size = self.sizeX * self.sizeY
-    self.cells = {}
+    -- self.cells = {}
     self.cellValue = {}
+    self.cellDomain = {}
+    self.cellConstraint = {}
     for i = 1, self.size do
         -- local newDomain = {}
         -- for j = 1, #domain do
             -- newDomain[j] = domain[j]
         -- end
 
-        self.cells[i] = cell:new({unpack(domain)})
+        self.cellConstraint[i] = {}
+        self.cellDomain[i] = {unpack(domain)}
     end
     self.constraints = {}
     self.addVarsAfterAnyChange = true
@@ -239,7 +240,7 @@ end
 -- linear:getDomainyID(7) -- will return the domain for the 7th item. Ex: {4, 6, 8}
 --
 function TableSalt:getDomainByID(i)
-    return self.cells[i].domain
+    return self.cellDomain[i]
 end
 
 --- Returns the domain given a name
@@ -284,7 +285,7 @@ function TableSalt:addConstraintByIDs(section, pepperConstraint, ...)
     local constraintNum = #self.constraints+1
     self.constraints[ constraintNum ] = constraint:new(section, pepperConstraint, ...)
     for i,v in ipairs(section) do
-        table.insert(self.cells[v].constraints, constraintNum)
+        table.insert(self.cellConstraint[v], constraintNum)
     end
 end
 
@@ -422,7 +423,7 @@ function TableSalt:solveConstraints(specificCellID)
 
     -- if specific constraints were passed in, use those. Otherwise use EVERYTHING.
     if specificCellID ~= nil then
-        for q, r in ipairs(self.cells[specificCellID].constraints) do
+        for q, r in ipairs(self.cellConstraint[specificCellID]) do
             local currentConstraint = self.constraints[r]
             frontier:push(currentConstraint, currentConstraint.numCells)
         end
@@ -441,14 +442,14 @@ function TableSalt:solveConstraints(specificCellID)
         for i, v in ipairs(newDomains) do
             -- gets the cell index from the constraint section list
             local cellIndex = currentConstraint.section[i]
-            local currentCell = self.cells[cellIndex]
+            -- local currentCell = self.cells[cellIndex]
 
             -- old domain size used to determine what constraints should be re-added
-            local oldSize = #currentCell.domain
+            local oldSize = #self.cellDomain[cellIndex]
             local currentSize = #v
 
             -- set the cell's domain to v
-            currentCell.domain = v
+            self.cellDomain[cellIndex] = v
 
             -- if the domain is greater than one for any value in the section, the constraint hasn't passed
             -- if currentSize > 1 then
@@ -459,7 +460,7 @@ function TableSalt:solveConstraints(specificCellID)
 
                 -- add affected constraints back to queue
                 if not self.addVarsAfterAnyChange then
-                    for q, r in ipairs(currentCell.constraints) do
+                    for q, r in ipairs(self.cellConstraint[cellIndex]) do
                         frontier:push(self.constraints[r])
                     end
                 end
@@ -472,7 +473,7 @@ function TableSalt:solveConstraints(specificCellID)
             if self.addVarsAfterAnyChange and oldSize ~= currentSize then
                 for i, v in ipairs(currentConstraint.section) do
                     local cellIndex = currentConstraint.section[i]
-                    for q, r in ipairs(self.cells[cellIndex].constraints) do
+                    for q, r in ipairs(self.cellConstraint[cellIndex]) do
                         frontier:push(self.constraints[r], lastVal)
                         lastVal = lastVal+1
                     end
@@ -499,14 +500,14 @@ function TableSalt:getSmallestDomainID()
     local cellIndex = nil
     -- for i, v in ipairs(self.cells) do
     for i = 1, self.size do
-        local currentDomainSize = #self.cells[i].domain
+        local currentDomainSize = #self.cellDomain[i]
         if currentDomainSize > 1 and currentDomainSize < smallestDomainSize then
             -- return cellIndex
             smallestDomainSize = currentDomainSize
             cellIndex = i
         elseif currentDomainSize == smallestDomainSize then
             -- Degree heuristic
-            if #self.cells[i].constraints > #self.cells[cellIndex].constraints then
+            if #self.cellConstraint[i] > #self.cellConstraint[cellIndex] then
                 cellIndex = i
             end
         -- crazy debugs stuffss
@@ -533,13 +534,13 @@ function TableSalt:solveForwardCheck()
     local tinyIndex = self:getSmallestDomainID()
 
     -- ahhh yiss. going to assign on if em. Let's see what happens!
-    for i,v in ipairs(self.cells[tinyIndex].domain) do
+    for i,v in ipairs(self.cellDomain[tinyIndex]) do
         -- copy the data (in case the constraints fail)
         local cellCopy = self:backupCells()
 
         -- set the value, then try solving the constraints
         self.cellValue[tinyIndex] = v
-        self.cells[tinyIndex].domain = {v}
+        self.cellDomain[tinyIndex] = {v}
         local wasSucessful = self:solveConstraints(tinyIndex)
 
         -- so solveConstraints was able to fill up as much as it could
