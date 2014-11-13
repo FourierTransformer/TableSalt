@@ -32,6 +32,7 @@ local unpack = unpack
 -- ================
 -- The following four are oddly specifc restore/backup functions. Done this way for Speed/privacy.
 local function backupCells(cellDomain, cellValue)
+    local cellDomain, cellValue = cellDomain, cellValue
     local serial = {{}, {}}
     for i = 1, #cellDomain do
         serial[1][i] = {unpack(cellDomain[i])}
