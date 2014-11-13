@@ -96,18 +96,19 @@ function TableSalt:initialize(domain, sizeX, sizeY)
 
     self.sizeY = sizeY or 1
     self.size = self.sizeX * self.sizeY
-    -- self.cells = {}
-    self.cellValue = {}
-    self.cellDomain = {}
-    self.cellConstraint = {}
+    self.cells = {
+        value = {},
+        domain = {},
+        constraint = {},
+    }
     for i = 1, self.size do
         -- local newDomain = {}
         -- for j = 1, #domain do
             -- newDomain[j] = domain[j]
         -- end
 
-        self.cellConstraint[i] = {}
-        self.cellDomain[i] = {unpack(domain)}
+        self.cells.constraint[i] = {}
+        self.cells.domain[i] = {unpack(domain)}
     end
     self.constraints = {}
     self.addVarsAfterAnyChange = true
@@ -170,7 +171,7 @@ end
 -- linear:getValueByID(7) -- will return the value for the 7th item
 --
 function TableSalt:getValueByID(i)
-    return self.cellValue[i]
+    return self.cells.value[i]
 end
 
 --- Returns the value given a name
@@ -210,7 +211,7 @@ end
 -- linear:getDomainyID(7) -- will return the domain for the 7th item. Ex: {4, 6, 8}
 --
 function TableSalt:getDomainByID(i)
-    return self.cellDomain[i]
+    return self.cells.domain[i]
 end
 
 --- Returns the domain given a name
@@ -255,7 +256,7 @@ function TableSalt:addConstraintByIDs(section, pepperConstraint, ...)
     local constraintNum = #self.constraints+1
     self.constraints[ constraintNum ] = constraint:new(section, pepperConstraint, ...)
     for i,v in ipairs(section) do
-        table.insert(self.cellConstraint[v], constraintNum)
+        table.insert(self.cells.constraint[v], constraintNum)
     end
 end
 
@@ -346,7 +347,7 @@ end
 --
 function TableSalt:isFilled()
     for i=1, self.size do
-        if self.cellValue[i] == nil then
+        if self.cells.value[i] == nil then
             return false
         end
     end
@@ -393,7 +394,7 @@ function TableSalt:solveConstraints(specificCellID)
 
     -- if specific constraints were passed in, use those. Otherwise use EVERYTHING.
     if specificCellID ~= nil then
-        for q, r in ipairs(self.cellConstraint[specificCellID]) do
+        for q, r in ipairs(self.cells.constraint[specificCellID]) do
             local currentConstraint = self.constraints[r]
             frontier:push(currentConstraint, currentConstraint.numCells)
         end
@@ -414,22 +415,22 @@ function TableSalt:solveConstraints(specificCellID)
             local cellIndex = currentConstraint.section[i]
 
             -- old domain size used to determine what constraints should be re-added
-            local oldSize = #self.cellDomain[cellIndex]
+            local oldSize = #self.cells.domain[cellIndex]
             local currentSize = #v
 
             -- set the cell's domain to v
-            self.cellDomain[cellIndex] = v
+            self.cells.domain[cellIndex] = v
 
             -- if the domain is greater than one for any value in the section, the constraint hasn't passed
             -- if currentSize > 1 then
                 -- passedCurrentConstraint = false
-            if self.cellValue[cellIndex] == nil and currentSize == 1 then
+            if self.cells.value[cellIndex] == nil and currentSize == 1 then
                 -- however, a cell's value may be set if the length of it's list is 1
-                self.cellValue[cellIndex] = v[1]
+                self.cells.value[cellIndex] = v[1]
 
                 -- add affected constraints back to queue
                 if not self.addVarsAfterAnyChange then
-                    for q, r in ipairs(self.cellConstraint[cellIndex]) do
+                    for q, r in ipairs(self.cells.constraint[cellIndex]) do
                         frontier:push(self.constraints[r])
                     end
                 end
@@ -442,7 +443,7 @@ function TableSalt:solveConstraints(specificCellID)
             if self.addVarsAfterAnyChange and oldSize ~= currentSize then
                 for i, v in ipairs(currentConstraint.section) do
                     local cellIndex = currentConstraint.section[i]
-                    for q, r in ipairs(self.cellConstraint[cellIndex]) do
+                    for q, r in ipairs(self.cells.constraint[cellIndex]) do
                         frontier:push(self.constraints[r], lastVal)
                         lastVal = lastVal+1
                     end
@@ -469,14 +470,14 @@ function TableSalt:getSmallestDomainID()
     local cellIndex = nil
     -- for i, v in ipairs(self.cells) do
     for i = 1, self.size do
-        local currentDomainSize = #self.cellDomain[i]
+        local currentDomainSize = #self.cells.domain[i]
         if currentDomainSize > 1 and currentDomainSize < smallestDomainSize then
             -- return cellIndex
             smallestDomainSize = currentDomainSize
             cellIndex = i
         elseif currentDomainSize == smallestDomainSize then
             -- Degree heuristic
-            if #self.cellConstraint[i] > #self.cellConstraint[cellIndex] then
+            if #self.cells.constraint[i] > #self.cells.constraint[cellIndex] then
                 cellIndex = i
             end
         -- crazy debugs stuffss
@@ -503,13 +504,13 @@ function TableSalt:solveForwardCheck()
     local tinyIndex = self:getSmallestDomainID()
 
     -- ahhh yiss. going to assign on if em. Let's see what happens!
-    for i,v in ipairs(self.cellDomain[tinyIndex]) do
+    for i,v in ipairs(self.cells.domain[tinyIndex]) do
         -- copy the data (in case the constraints fail)
-        local cellCopy = backupCells(self.cellDomain, self.cellValue)
+        local cellCopy = backupCells(self.cells.domain, self.cells.value)
 
         -- set the value, then try solving the constraints
-        self.cellValue[tinyIndex] = v
-        self.cellDomain[tinyIndex] = {v}
+        self.cells.value[tinyIndex] = v
+        self.cells.domain[tinyIndex] = {v}
         local wasSucessful = self:solveConstraints(tinyIndex)
 
         -- so solveConstraints was able to fill up as much as it could
@@ -526,8 +527,8 @@ function TableSalt:solveForwardCheck()
 
         -- restore values if things go bad.
         -- self:restoreCells(cellCopy)
-        self.cellDomain = cellCopy[1]
-        self.cellValue = cellCopy[2]
+        self.cells.domain = cellCopy[1]
+        self.cells.value = cellCopy[2]
 
     end
 
