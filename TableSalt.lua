@@ -31,35 +31,18 @@ local unpack = unpack
 -- Private methods
 -- ================
 -- The following four are oddly specifc restore/backup functions. Done this way for Speed/privacy.
--- local function backupCells(cells, cellValue)
---     local serial = {{}, {}}
---     for i = 1, #cells do
---         serial[1][i] = {unpack(cells[i].domain)}
---         serial[2][i] = cellValue[i]
---     end
---     return serial
--- end
-
--- local function restoreCells(cells, cellValue, serial)
---     for i=1, #cells do
---         cells[i].domain = serial[1][i]
---         cellValue[i] = serial[2][i]
---     end
--- end
+local function backupCells(cellDomain, cellValue)
+    local serial = {{}, {}}
+    for i = 1, #cellDomain do
+        serial[1][i] = {unpack(cellDomain[i])}
+        serial[2][i] = cellValue[i]
+    end
+    return serial
+end
 
 -- ================
 -- Module classes
 -- ================
-
---- `cell` class
--- @type cell
-local cell = class()
-function cell:initialize()
-    -- self.id = id
-    -- self.domain = domain
-    -- self.value = nil
-    -- self.constraints = {}
-end
 
 --- `constraint` class
 -- @type constraint
@@ -74,20 +57,6 @@ end
 --- `TableSalt` class
 -- @type TableSalt
 local TableSalt = class()
-
-function TableSalt:backupCells()
-    local serial = {{}, {}}
-    for i = 1, self.size do
-        serial[1][i] = {unpack(self.cellDomain[i])}
-        serial[2][i] = self.cellValue[i]
-    end
-    return serial
-end
-
-function TableSalt:restoreCells(serial)
-    self.cellDomain = serial[1]
-    self.cellValue = serial[2]
-end
 
 --- Creates a new `TableSalt` instance. This will initialize a table, where each cell has a unique id which hold
 -- a value and a domain that can be accessed through various getters, as described below.
@@ -442,7 +411,6 @@ function TableSalt:solveConstraints(specificCellID)
         for i, v in ipairs(newDomains) do
             -- gets the cell index from the constraint section list
             local cellIndex = currentConstraint.section[i]
-            -- local currentCell = self.cells[cellIndex]
 
             -- old domain size used to determine what constraints should be re-added
             local oldSize = #self.cellDomain[cellIndex]
@@ -536,7 +504,7 @@ function TableSalt:solveForwardCheck()
     -- ahhh yiss. going to assign on if em. Let's see what happens!
     for i,v in ipairs(self.cellDomain[tinyIndex]) do
         -- copy the data (in case the constraints fail)
-        local cellCopy = self:backupCells()
+        local cellCopy = backupCells(self.cellDomain, self.cellValue)
 
         -- set the value, then try solving the constraints
         self.cellValue[tinyIndex] = v
@@ -556,7 +524,9 @@ function TableSalt:solveForwardCheck()
         end
 
         -- restore values if things go bad.
-        self:restoreCells(cellCopy)
+        -- self:restoreCells(cellCopy)
+        self.cellDomain = cellCopy[1]
+        self.cellValue = cellCopy[2]
 
     end
 
