@@ -428,10 +428,8 @@ function TableSalt:solveConstraints(specificCellID)
                 self.cellValue[cellIndex] = v[1]
 
                 -- add affected constraints back to queue
-                if not self.addVarsAfterAnyChange then
-                    for q, r in ipairs(self.cellConstraint[cellIndex]) do
-                        frontier:push(self.constraints[r])
-                    end
+                for q, r in ipairs(self.cellConstraint[cellIndex]) do
+                    frontier:push(self.constraints[r])
                 end
 
             elseif currentSize <= 0 then
@@ -611,12 +609,13 @@ local Pepper = {}
 function Pepper.allDiff(section, board)
     local newDomains = {}
     local reverseValuesToRemove = {}
+    local sectionSize = #section
 
     -- determine which values have been set
     -- for i, v in ipairs(section) do
-    for i = 1, #section do
+    for i = 1, sectionSize do
         local currentValue = board:getValueByID(section[i])
-        if currentValue ~= nil then
+        if currentValue then
             -- ensure all values in this section are different. Error out otherwise.
             if reverseValuesToRemove[currentValue] == true then
                 return {{}}
@@ -629,7 +628,7 @@ function Pepper.allDiff(section, board)
 
     -- remove those values from the domain of the others
     -- for ind, w in ipairs(section) do
-    for ind = 1, #section do 
+    for ind = 1, sectionSize do 
         local currentDomain = board:getDomainByID(section[ind])
         local domainSize = #currentDomain
         if domainSize > 1 then
@@ -640,7 +639,7 @@ function Pepper.allDiff(section, board)
             end
             local j = 0;
             for i=1, domainSize do
-                if currentDomain[i] ~= nil then
+                if currentDomain[i] then
                     j = j + 1
                     currentDomain[j] = currentDomain[i]
                 end
@@ -648,6 +647,18 @@ function Pepper.allDiff(section, board)
             for i = j+1, domainSize do
                 currentDomain[i] = nil
             end
+
+            -- somehow slower (in luaJit by a hair, actually faster in pure lua)?
+            -- local i = 1
+            -- while i <= domainSize do
+            --     if reverseValuesToRemove[currentDomain[i]] then
+            --         currentDomain[i] = currentDomain[domainSize]
+            --         currentDomain[domainSize] = nil
+            --         domainSize = domainSize - 1
+            --     else
+            --         i = i + 1
+            --     end
+            -- end
 
             newDomains[ind] = currentDomain
         end
