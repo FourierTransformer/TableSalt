@@ -96,24 +96,20 @@ function TableSalt:initialize(domain, sizeX, sizeY)
 
     self.sizeY = sizeY or 1
     self.size = self.sizeX * self.sizeY
+    -- self.cells may come back!
     -- self.cells = {}
     self.cellValue = {}
     self.cellDomain = {}
     self.cellConstraint = {}
     for i = 1, self.size do
-        -- local newDomain = {}
-        -- for j = 1, #domain do
-            -- newDomain[j] = domain[j]
-        -- end
-
         self.cellConstraint[i] = {}
         self.cellDomain[i] = {unpack(domain)}
     end
     self.constraints = {}
     self.addVarsAfterAnyChange = true
 
-    self.tinyID = 0
-    self.tinyDomainSize = math.huge
+    -- set random seed to os.time() for always different randoms
+    math.randomseed(os.time())
 end
 
 --- switch to toggle when additional constraints should be added for solveConstraints.
@@ -476,6 +472,10 @@ function TableSalt:getSmallestDomainID()
             -- Degree heuristic
             if #self.cellConstraint[i] > #self.cellConstraint[cellIndex] then
                 cellIndex = i
+            elseif #self.cellConstraint[i] == #self.cellConstraint[cellIndex] then
+                if math.random() > .5 then
+                    cellIndex = i
+                end
             end
         -- crazy debugs stuffss
         -- elseif currentDomainSize == 1 then
@@ -632,6 +632,7 @@ function Pepper.allDiff(section, board)
         local currentDomain = board:getDomainByID(section[ind])
         local domainSize = #currentDomain
         if domainSize > 1 then
+
             for i=1, domainSize do
                 if reverseValuesToRemove[currentDomain[i]] then
                     currentDomain[i] = nil
