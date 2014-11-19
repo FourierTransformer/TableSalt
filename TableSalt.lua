@@ -106,6 +106,7 @@ function TableSalt:initialize(domain, sizeX, sizeY)
         self.cellDomain[i] = {unpack(domain)}
     end
     self.constraints = {}
+    self.constraintVals = {}
     self.addVarsAfterAnyChange = true
 
     -- set random seed to os.time() for always different randoms
@@ -250,8 +251,10 @@ end
 function TableSalt:addConstraintByIDs(section, pepperConstraint, ...)
     local constraintNum = #self.constraints+1
     self.constraints[ constraintNum ] = constraint:new(section, pepperConstraint, ...)
+    self.constraintVals[ constraintNum ] = 0
     for i,v in ipairs(section) do
         table.insert(self.cellConstraint[v], constraintNum)
+        self.constraintVals[ constraintNum ] = self.constraintVals[ constraintNum ] + 1
     end
 end
 
@@ -377,6 +380,16 @@ function TableSalt:isSolved()
     
 end
 
+-- SHHH this function doesn't really exist.
+local function assignValue(cellID, value, board)
+    board.cellValue[cellID] = value
+    board.cellDomain[cellID] = {value}
+    for i = 1, #board.cellConstraint[cellID] do
+        local constraintNum = board.cellConstraint[cellID][i]
+        board.constraintVals[constraintNum] = board.constraintVals[constraintNum] - 1
+    end
+end
+
 --- runs the [AC3 algorithm](http://en.wikipedia.org/wiki/AC-3_algorithm) to reduce domains/solve the problem
 -- @param specificCellID (optional) useful for running constrains only associated with one cell. If omitted, solveConstraints will use all constraints
 -- @return `true` if all values poosible are filled. `false` otherwise (ie some cell's domain was reduced to 0)
@@ -421,7 +434,8 @@ function TableSalt:solveConstraints(specificCellID)
                 -- passedCurrentConstraint = false
             if self.cellValue[cellIndex] == nil and currentSize == 1 then
                 -- however, a cell's value may be set if the length of it's list is 1
-                self.cellValue[cellIndex] = v[1]
+                -- self.cellValue[cellIndex] = v[1]
+                assignValue(cellIndex, v[1], self)
 
                 -- add affected constraints back to queue
                 for q, r in ipairs(self.cellConstraint[cellIndex]) do
@@ -448,6 +462,17 @@ function TableSalt:solveConstraints(specificCellID)
     return true
 end
 
+
+--gets the number of affected cells
+local function degreeHeuristic(cellID, board)
+    local count = 0
+    for i = 1, #board.cellConstraint[cellID] do
+        local constraintNum = board.cellConstraint[cellID][i]
+        count = count + board.constraintVals[constraintNum]
+    end
+    return count
+end
+
 --- returns the id associated with the variable with the smallest domain.
 -- If there's a tie, it uses the degree heuristic which picks the variable with the larger number of constraints
 -- @return the id of the variable with the smallest domain
@@ -461,7 +486,6 @@ end
 function TableSalt:getSmallestDomainID()
     local smallestDomainSize = math.huge
     local cellIndex = nil
-    -- for i, v in ipairs(self.cells) do
     for i = 1, self.size do
         local currentDomainSize = #self.cellDomain[i]
         if currentDomainSize > 1 and currentDomainSize < smallestDomainSize then
@@ -470,9 +494,11 @@ function TableSalt:getSmallestDomainID()
             cellIndex = i
         elseif currentDomainSize == smallestDomainSize then
             -- Degree heuristic
-            if #self.cellConstraint[i] > #self.cellConstraint[cellIndex] then
+            local currentDegree = degreeHeuristic(i, self)
+            local smallestDegree = degreeHeuristic(cellIndex, self)
+            if currentDegree > smallestDegree then
                 cellIndex = i
-            elseif #self.cellConstraint[i] == #self.cellConstraint[cellIndex] then
+            elseif currentDegree == smallestDegree then
                 if math.random() > .5 then
                     cellIndex = i
                 end
@@ -504,10 +530,10 @@ function TableSalt:solveForwardCheck()
     for i,v in ipairs(self.cellDomain[tinyIndex]) do
         -- copy the data (in case the constraints fail)
         local cellCopy = backupCells(self.cellDomain, self.cellValue)
+        local constraintValCopy = {unpack(self.constraintVals)}
 
         -- set the value, then try solving the constraints
-        self.cellValue[tinyIndex] = v
-        self.cellDomain[tinyIndex] = {v}
+        assignValue(tinyIndex, v, self)
         local wasSucessful = self:solveConstraints(tinyIndex)
 
         -- so solveConstraints was able to fill up as much as it could
@@ -523,9 +549,9 @@ function TableSalt:solveForwardCheck()
         end
 
         -- restore values if things go bad.
-        -- self:restoreCells(cellCopy)
         self.cellDomain = cellCopy[1]
         self.cellValue = cellCopy[2]
+        self.constraintVals = constraintValCopy
 
     end
 
@@ -710,7 +736,7 @@ end
 local CSP = {
     TableSalt = TableSalt,
     Pepper = Pepper,
-    _VERSION = ".01"
+    _VERSION = ".02"
 }
 
 return CSP
