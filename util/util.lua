@@ -1,3 +1,5 @@
+#!/usr/bin/env lua
+
 -- Minimalistic class implementation
 -- From Roland Yonaba used under MIT License
 local class = function(attr)

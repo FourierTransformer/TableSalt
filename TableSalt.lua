@@ -20,9 +20,8 @@ local Pepper = CSP.Pepper
 -- ================
 -- requires and such
 -- ================
-local _PATH = (...):gsub('TableSalt/','') 
-local class = require(_PATH .. '/util/util')
-local heap = require (_PATH .. '/util/Peaque/Peaque')
+local class = require('tsalt.util')
+local heap = require ('tsalt.Peaque')
 
 local ipairs = ipairs
 local unpack = unpack
@@ -154,7 +153,7 @@ end
 -- sudoku:getIDByPair(5,5) -- will return the id of the centermost cell
 --
 function TableSalt:getIDByPair(x, y)
-    return (y-1)*self.sizeY+x
+    return (y-1)*self.sizeX+x
 end
 
 --- Returns the value given the id
