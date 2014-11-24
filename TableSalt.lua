@@ -133,6 +133,12 @@ function TableSalt:getAddVarsAfterAnyChange()
     return self.addVarsAfterAnyChange
 end
 
+-- returns all the values index in a 1xN array
+-- @return values of all variables in a 1xN array
+function TableSalt:getAllValues()
+    return self.cellValue
+end
+
 --- Returns the id given a variable name
 -- @param n the name of a variable used in the problem
 -- @return the id associated with the given name
