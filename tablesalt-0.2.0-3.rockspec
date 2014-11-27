@@ -1,5 +1,5 @@
 package = "TableSalt"
-version = "0.2.0-2"
+version = "0.2.0-3"
 
 source = {
 	url = "git://github.com/FourierTransformer/TableSalt.git",
@@ -26,7 +26,7 @@ build = {
 	type = "builtin",
 	modules = {
 		["TableSalt"] = "TableSalt.lua",
-		["tsalt.peaque"] = "util/Peaque.lua",
+		["tsalt.Peaque"] = "util/Peaque.lua",
 		["tsalt.util"] = "util/util.lua",
 	},
 }
